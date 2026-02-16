@@ -696,12 +696,17 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>🏢 Офис Тракер 3x2</h1>
+            <h1>
+                🏢 Офис Тракер 3x2
+                <span id="cloudStatusBadge" style="display: none; font-size: 0.4em; vertical-align: middle; background: #e3f2fd; color: #1976d2; padding: 8px 16px; border-radius: 20px; margin-left: 15px;">
+                    ☁️ <span id="cloudStatusEmail"></span>
+                </span>
+            </h1>
             <p>Проследяване на хибридния работен модел</p>
             <p style="margin-top: 10px; color: #667eea; font-weight: 600; font-size: 0.95em;">Created by Bozhidar Stoykov</p>
             <div style="margin-top: 20px; display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
                 <button class="btn-info" onclick="openInfoModal()">
-                    ℹ️ Информация - Как работи?
+                    ℹ️ Информация - Як работи?
                 </button>
                 <button class="btn-info" onclick="openLocalModal()">
                     💾 Локално
@@ -824,9 +829,21 @@
                 </div>
 
                 <div class="info-section">
-                    <h3>💾 Запазване на данни</h3>
+                    <h3>💾 Локално запазване</h3>
                     <p>Данните се съхраняват <strong>локално в браузъра</strong> на това устройство.</p>
-                    <p style="color: #e67e22; font-weight: bold;">⚠️ Важно: Всяко устройство има отделни данни! Телефон, компютър - различни записи.</p>
+                    <p><strong>✅ Плюсове:</strong></p>
+                    <p style="margin-left: 20px;">• Работи офлайн<br>• Без нужда от регистрация<br>• Пълна поверителност</p>
+                    <p><strong>⚠️ Ограничения:</strong></p>
+                    <p style="margin-left: 20px;">• Всяко устройство има отделни данни<br>• Телефон и компютър - различни записи<br>• Ръчно изпращане на отчети</p>
+                </div>
+
+                <div class="info-section">
+                    <h3>☁️ Облачен режим</h3>
+                    <p>Данните се съхраняват <strong>в облака</strong> и са достъпни от всички устройства.</p>
+                    <p><strong>✅ Плюсове:</strong></p>
+                    <p style="margin-left: 20px;">• Синхронизация между устройства<br>• Достъп от компютър И телефон<br>• Автоматични email отчети<br>• Scheduled изпращане на всеки 4 дни<br>• Изпращане до мениджър автоматично</p>
+                    <p><strong>ℹ️ За използване:</strong></p>
+                    <p style="margin-left: 20px;">• Изисква регистрация<br>• Натисни "☁️ Облак" → "Регистрирай се"</p>
                 </div>
 
                 <div class="info-section">
@@ -1001,11 +1018,56 @@
         </div>
     </div>
 
+<!-- Login Modal -->
+<div id="loginModal" class="modal">
+    <div class="modal-content" style="max-width: 400px;">
+        <div class="modal-header">
+            <h2>🔓 Вход</h2>
+            <button class="close-btn" onclick="closeLoginModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <input type="email" id="loginEmailInput" class="auth-input" placeholder="📧 Email" />
+            <input type="password" id="loginPasswordInput" class="auth-input" placeholder="🔒 Парола" />
+            
+            <button onclick="doLogin()" class="auth-btn auth-btn-primary">
+                🔓 Влез
+            </button>
+            
+            <div class="auth-link">
+                Нямаш акаунт? <a onclick="switchToRegister()">Регистрирай се</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Register Modal -->
+<div id="registerModal" class="modal">
+    <div class="modal-content" style="max-width: 400px;">
+        <div class="modal-header">
+            <h2>📝 Регистрация</h2>
+            <button class="close-btn" onclick="closeRegisterModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <input type="text" id="registerNameInput" class="auth-input" placeholder="👤 Име (опционално)" />
+            <input type="email" id="registerEmailInput" class="auth-input" placeholder="📧 Email" />
+            <input type="password" id="registerPasswordInput" class="auth-input" placeholder="🔒 Парола" />
+            <input type="password" id="registerPasswordConfirmInput" class="auth-input" placeholder="🔒 Потвърди парола" />
+            
+            <button onclick="doRegister()" class="auth-btn auth-btn-primary">
+                📝 Регистрирай се
+            </button>
+            
+            <div class="auth-link">
+                Вече имаш акаунт? <a onclick="switchToLogin()">Влез тук</a>
+            </div>
+        </div>
+    </div>
+</div>
     <script>
         // ============================================
         // CONFIGURATION
         // ============================================
-        const GOOGLE_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzpvfQiSMwtI6IGb03eQWt-cIH2V1JQETDI6WzpXkwoXj1hDQ1KLgULHrThSjVvGzcSoA/exec';
+        const GOOGLE_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyNUPcWZ3Yy4f2itUfR7thomzYd_wWi8q0hZamt1Jpw0kTJji0-l4sS3aLoeRyCKEfPPw/exec';
         
         // ============================================
         // GLOBAL STATE
@@ -1022,6 +1084,41 @@
         
         // Initial display
         updateDisplay();
+        updateCloudStatusBadge();
+
+        // ============================================
+        // CLOUD STATUS BADGE
+        // ============================================
+        function maskEmail(email) {
+            if (!email) return '';
+            const parts = email.split('@');
+            if (parts.length !== 2) return email;
+            
+            const username = parts[0];
+            const domain = parts[1];
+            
+            if (username.length <= 2) {
+                return email; // Too short to mask
+            }
+            
+            const first = username[0];
+            const last = username[username.length - 1];
+            const masked = first + '***' + last + '@' + domain;
+            
+            return masked;
+        }
+
+        function updateCloudStatusBadge() {
+            const badge = document.getElementById('cloudStatusBadge');
+            const emailSpan = document.getElementById('cloudStatusEmail');
+            
+            if (cloudUser && cloudUser.email) {
+                badge.style.display = 'inline-block';
+                emailSpan.textContent = maskEmail(cloudUser.email);
+            } else {
+                badge.style.display = 'none';
+            }
+        }
 
         // ============================================
         // MODAL CONTROLS
@@ -1066,44 +1163,84 @@
         // CLOUD AUTH (SIMPLIFIED)
         // ============================================
         function showCloudLogin() {
-            const email = prompt('📧 Въведи email:');
-            const password = prompt('🔒 Въведи парола:');
-            
-            if (email && password) {
-                // Call Google Apps Script
-                fetch(GOOGLE_APPS_SCRIPT_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        action: 'login',
-                        email: email,
-                        password: password
-                    })
-                })
-                .then(() => {
-                    // no-cors mode doesn't return response, so assume success
-                    cloudUser = {
-                        email: email,
-                        autoSendToMe: false,
-                        autoSendToManager: false,
-                        managerEmail: null
-                    };
-                    localStorage.setItem('cloudUser', JSON.stringify(cloudUser));
-                    updateCloudModalView();
-                    alert('✅ Успешен вход!');
-                })
-                .catch(error => {
-                    alert('❌ Грешка при вход: ' + error.message);
-                });
-            }
+            closeCloudModal();
+            document.getElementById('loginModal').style.display = 'block';
         }
 
         function showCloudRegister() {
-            const name = prompt('👤 Въведи име (опционално):');
-            const email = prompt('📧 Въведи email:');
-            const password = prompt('🔒 Въведи парола:');
-            const passwordConfirm = prompt('🔒 Потвърди парола:');
+            closeCloudModal();
+            document.getElementById('registerModal').style.display = 'block';
+        }
+
+        function closeLoginModal() {
+            document.getElementById('loginModal').style.display = 'none';
+            document.getElementById('loginEmailInput').value = '';
+            document.getElementById('loginPasswordInput').value = '';
+        }
+
+        function closeRegisterModal() {
+            document.getElementById('registerModal').style.display = 'none';
+            document.getElementById('registerNameInput').value = '';
+            document.getElementById('registerEmailInput').value = '';
+            document.getElementById('registerPasswordInput').value = '';
+            document.getElementById('registerPasswordConfirmInput').value = '';
+        }
+
+        function switchToRegister() {
+            closeLoginModal();
+            showCloudRegister();
+        }
+
+        function switchToLogin() {
+            closeRegisterModal();
+            showCloudLogin();
+        }
+
+        function doLogin() {
+            const email = document.getElementById('loginEmailInput').value.trim();
+            const password = document.getElementById('loginPasswordInput').value;
+            
+            if (!email || !password) {
+                alert('❌ Моля попълнете email и парола!');
+                return;
+            }
+            
+            // Call Google Apps Script
+            fetch(GOOGLE_APPS_SCRIPT_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'login',
+                    email: email,
+                    password: password
+                })
+            })
+            .then(() => {
+                // no-cors mode doesn't return response, so assume success
+                cloudUser = {
+                    email: email,
+                    autoSendToMe: false,
+                    autoSendToManager: false,
+                    managerEmail: null
+                };
+                localStorage.setItem('cloudUser', JSON.stringify(cloudUser));
+                updateCloudStatusBadge();
+                closeLoginModal();
+                openCloudModal();
+                updateCloudModalView();
+                alert('✅ Успешен вход!');
+            })
+            .catch(error => {
+                alert('❌ Грешка при вход: ' + error.message);
+            });
+        }
+
+        function doRegister() {
+            const name = document.getElementById('registerNameInput').value.trim();
+            const email = document.getElementById('registerEmailInput').value.trim();
+            const password = document.getElementById('registerPasswordInput').value;
+            const passwordConfirm = document.getElementById('registerPasswordConfirmInput').value;
             
             if (!email || !password) {
                 alert('❌ Моля попълнете email и парола!');
@@ -1133,7 +1270,9 @@
                 })
             })
             .then(() => {
+                closeRegisterModal();
                 alert('✅ Регистрацията е успешна! Можеш да влезеш.');
+                showCloudLogin();
             })
             .catch(error => {
                 alert('❌ Грешка при регистрация: ' + error.message);
@@ -1144,6 +1283,7 @@
             if (confirm('Сигурен ли си че искаш да излезеш?')) {
                 cloudUser = null;
                 localStorage.removeItem('cloudUser');
+                updateCloudStatusBadge();
                 closeCloudModal();
             }
         }
@@ -1961,6 +2101,8 @@ Q1: ${Math.round(stats.quarter.compliancePercent)}% ${stats.quarter.compliancePe
             const infoModal = document.getElementById('infoModal');
             const localModal = document.getElementById('localModal');
             const cloudModal = document.getElementById('cloudModal');
+            const loginModal = document.getElementById('loginModal');
+            const registerModal = document.getElementById('registerModal');
             
             if (event.target == infoModal) {
                 closeInfoModal();
@@ -1968,6 +2110,10 @@ Q1: ${Math.round(stats.quarter.compliancePercent)}% ${stats.quarter.compliancePe
                 closeLocalModal();
             } else if (event.target == cloudModal) {
                 closeCloudModal();
+            } else if (event.target == loginModal) {
+                closeLoginModal();
+            } else if (event.target == registerModal) {
+                closeRegisterModal();
             }
         }
     </script>
