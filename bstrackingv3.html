@@ -706,13 +706,13 @@
             <p style="margin-top: 10px; color: #667eea; font-weight: 600; font-size: 0.95em;">Created by Bozhidar Stoykov</p>
             <div style="margin-top: 20px; display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
                 <button class="btn-info" onclick="openInfoModal()">
-                    ℹ️ Информация - Как работи?
+                    ℹ️ Информация - Як работи?
                 </button>
                 <button class="btn-info" onclick="openLocalModal()">
                     💾 Локално
                 </button>
                 <button class="btn-info" onclick="openCloudModal()">
-                    ☁️ Облак - Регистрация
+                    ☁️ Облак
                 </button>
             </div>
         </div>
@@ -778,7 +778,7 @@
                 <strong>Офис Тракер 3x2</strong> | Създадено от <strong>Bozhidar Stoykov</strong>
             </p>
             <p style="margin: 5px 0 0 0; font-size: 0.8em; opacity: 0.8;">
-                v3.0 | Февруари 2026 | Данните може да се съхраняват локално на вашия браузър или във облака за всички устройства, its your choice.
+                v1.0 | Февруари 2026 | Данните се съхраняват локално във вашия браузър
             </p>
         </div>
     </div>
@@ -1067,7 +1067,7 @@
         // ============================================
         // CONFIGURATION
         // ============================================
-        const GOOGLE_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyY3YW8JIDRaeEljlRbKz5ii8kyXr20X_SYy9YZWVyzKTpSSYQmmIYxcdrdRvASPBAPbQ/exec';
+        const GOOGLE_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxYHGTlOigjA0O-dVm_haXkz5Q0N3kVVcImFkeChSfV3b8BID9ofmSYk0CMOQepaHD8Sg/exec';
         
         // ============================================
         // GLOBAL STATE
@@ -1205,35 +1205,42 @@
                 return;
             }
             
-            // Call Google Apps Script
-            fetch(GOOGLE_APPS_SCRIPT_URL, {
-                method: 'POST',
-                mode: 'no-cors',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    action: 'login',
-                    email: email,
-                    password: password
-                })
-            })
-            .then(() => {
-                // no-cors mode doesn't return response, so assume success
-                cloudUser = {
-                    email: email,
-                    autoSendToMe: false,
-                    autoSendToManager: false,
-                    managerEmail: null
-                };
-                localStorage.setItem('cloudUser', JSON.stringify(cloudUser));
-                updateCloudStatusBadge();
-                closeLoginModal();
-                openCloudModal();
-                updateCloudModalView();
-                alert('✅ Успешен вход!');
-            })
-            .catch(error => {
-                alert('❌ Грешка при вход: ' + error.message);
-            });
+            // Use JSONP to get real response from Apps Script
+            const callbackName = 'loginCallback_' + Date.now();
+            
+            window[callbackName] = function(result) {
+                document.getElementById(callbackName + '_script').remove();
+                delete window[callbackName];
+                
+                if (result.success) {
+                    cloudUser = {
+                        email: email,
+                        name: result.user.name || email.split('@')[0],
+                        autoSendToMe: result.user.autoSendToMe || false,
+                        autoSendToManager: result.user.autoSendToManager || false,
+                        managerEmail: result.user.managerEmail || null
+                    };
+                    localStorage.setItem('cloudUser', JSON.stringify(cloudUser));
+                    updateCloudStatusBadge();
+                    closeLoginModal();
+                    openCloudModal();
+                    updateCloudModalView();
+                    alert('✅ Успешен вход!');
+                } else {
+                    alert('❌ ' + (result.error || 'Грешен email или парола!'));
+                }
+            };
+            
+            const url = `${GOOGLE_APPS_SCRIPT_URL}?action=login&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}&callback=${callbackName}`;
+            const script = document.createElement('script');
+            script.id = callbackName + '_script';
+            script.src = url;
+            script.onerror = function() {
+                alert('❌ Грешка при свързване с сървъра!');
+                document.getElementById(callbackName + '_script').remove();
+                delete window[callbackName];
+            };
+            document.body.appendChild(script);
         }
 
         function doRegister() {
@@ -1257,26 +1264,32 @@
                 return;
             }
             
-            // Call Google Apps Script
-            fetch(GOOGLE_APPS_SCRIPT_URL, {
-                method: 'POST',
-                mode: 'no-cors',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    action: 'register',
-                    email: email,
-                    password: password,
-                    name: name
-                })
-            })
-            .then(() => {
-                closeRegisterModal();
-                alert('✅ Регистрацията е успешна! Можеш да влезеш.');
-                showCloudLogin();
-            })
-            .catch(error => {
-                alert('❌ Грешка при регистрация: ' + error.message);
-            });
+            // Use JSONP to get real response
+            const callbackName = 'registerCallback_' + Date.now();
+            
+            window[callbackName] = function(result) {
+                document.getElementById(callbackName + '_script').remove();
+                delete window[callbackName];
+                
+                if (result.success) {
+                    closeRegisterModal();
+                    alert('✅ Регистрацията е успешна! Можеш да влезеш.');
+                    showCloudLogin();
+                } else {
+                    alert('❌ ' + (result.error || 'Грешка при регистрация!'));
+                }
+            };
+            
+            const url = `${GOOGLE_APPS_SCRIPT_URL}?action=register&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}&name=${encodeURIComponent(name)}&callback=${callbackName}`;
+            const script = document.createElement('script');
+            script.id = callbackName + '_script';
+            script.src = url;
+            script.onerror = function() {
+                alert('❌ Грешка при свързване с сървъра!');
+                document.getElementById(callbackName + '_script').remove();
+                delete window[callbackName];
+            };
+            document.body.appendChild(script);
         }
 
         function cloudLogout() {
