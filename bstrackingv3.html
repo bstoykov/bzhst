@@ -706,13 +706,13 @@
             <p style="margin-top: 10px; color: #667eea; font-weight: 600; font-size: 0.95em;">Created by Bozhidar Stoykov</p>
             <div style="margin-top: 20px; display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
                 <button class="btn-info" onclick="openInfoModal()">
-                    ℹ️ Информация - Как работи?
+                    ℹ️ Информация - Як работи?
                 </button>
                 <button class="btn-info" onclick="openLocalModal()">
                     💾 Локално
                 </button>
                 <button class="btn-info" onclick="openCloudModal()">
-                    ☁️ Облак - Регистрация
+                    ☁️ Облак
                 </button>
             </div>
         </div>
@@ -1091,29 +1091,37 @@
         // CLOUD DATA SYNC
         // ============================================
         function loadCloudData() {
+            console.log('[LOAD FROM CLOUD] Starting...');
             const callbackName = 'loadCallback_' + Date.now();
             
             window[callbackName] = function(result) {
+                console.log('[LOAD FROM CLOUD] Response:', result);
                 document.getElementById(callbackName + '_script').remove();
                 delete window[callbackName];
                 
                 if (result.success && result.data) {
+                    console.log('[LOAD FROM CLOUD] Data received:', Object.keys(result.data).length, 'records');
+                    console.log('[LOAD FROM CLOUD] Data:', result.data);
+                    
                     // Merge cloud data with local data
                     attendanceData = result.data;
                     localStorage.setItem('attendanceData', JSON.stringify(attendanceData));
                     updateDisplay();
                 } else {
+                    console.error('[LOAD FROM CLOUD] No data or error:', result);
                     // No cloud data or error, use local data
                     updateDisplay();
                 }
             };
             
             const url = `${GOOGLE_APPS_SCRIPT_URL}?action=loadAttendance&email=${encodeURIComponent(cloudUser.email)}&callback=${callbackName}`;
+            console.log('[LOAD FROM CLOUD] URL:', url);
+            
             const script = document.createElement('script');
             script.id = callbackName + '_script';
             script.src = url;
             script.onerror = function() {
-                console.error('Failed to load cloud data');
+                console.error('[LOAD FROM CLOUD] Script load failed');
                 document.getElementById(callbackName + '_script').remove();
                 delete window[callbackName];
                 updateDisplay();
@@ -1123,6 +1131,8 @@
 
         function saveToCloud(date, type) {
             if (!cloudUser || !cloudUser.email) return;
+            
+            console.log(`[SAVE TO CLOUD] ${date} = ${type}`);
             
             // Use no-cors for saving (we don't need response)
             fetch(GOOGLE_APPS_SCRIPT_URL, {
@@ -1135,8 +1145,12 @@
                     date: date,
                     type: type
                 })
-            }).catch(error => {
-                console.error('Failed to save to cloud:', error);
+            })
+            .then(() => {
+                console.log(`[SAVE SUCCESS] ${date}`);
+            })
+            .catch(error => {
+                console.error(`[SAVE ERROR] ${date}:`, error);
             });
         }
 
@@ -1352,8 +1366,11 @@
                         
                         if (migrate) {
                             // Upload local data to cloud
+                            console.log(`[MIGRATION START] Uploading ${localDataCount} records...`);
+                            
                             Object.keys(localDataBackup).forEach(date => {
                                 const type = localDataBackup[date];
+                                console.log(`[MIGRATION] ${date} = ${type}`);
                                 saveToCloud(date, type);
                             });
                             
@@ -1362,6 +1379,7 @@
                             
                             // Wait a bit for saves to complete, then load from cloud
                             setTimeout(() => {
+                                console.log('[MIGRATION] Loading from cloud...');
                                 loadCloudData();
                                 alert(`✅ ${localDataCount} записа са качени в облака!`);
                             }, 2000);
