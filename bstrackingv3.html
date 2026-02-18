@@ -1130,12 +1130,12 @@
         }
 
         function saveToCloud(date, type) {
-            if (!cloudUser || !cloudUser.email) return;
+            if (!cloudUser || !cloudUser.email) return Promise.reject('No cloud user');
             
             console.log(`[SAVE TO CLOUD] ${date} = ${type}`);
             
-            // Use no-cors for saving (we don't need response)
-            fetch(GOOGLE_APPS_SCRIPT_URL, {
+            // Return promise so we can wait for it
+            return fetch(GOOGLE_APPS_SCRIPT_URL, {
                 method: 'POST',
                 mode: 'no-cors',
                 headers: { 'Content-Type': 'application/json' },
@@ -1151,6 +1151,7 @@
             })
             .catch(error => {
                 console.error(`[SAVE ERROR] ${date}:`, error);
+                throw error;
             });
         }
 
@@ -1162,22 +1163,32 @@
             
             if (dates.length === 0) return;
             
+            console.log(`[MIGRATE LOCAL TO CLOUD] Starting migration of ${dates.length} records...`);
+            
             // Upload all local data to cloud
-            let uploaded = 0;
-            dates.forEach(date => {
+            const savePromises = dates.map(date => {
                 const type = localData[date];
-                saveToCloud(date, type);
-                uploaded++;
+                return saveToCloud(date, type);
             });
             
-            // Mark as migrated
-            localStorage.setItem('hasLoadedCloudData_' + cloudUser.email, 'true');
-            
-            // After migration, load cloud data to ensure sync
-            setTimeout(() => {
-                loadCloudData();
-                alert(`✅ ${uploaded} записа са качени в облака!`);
-            }, 2000); // Wait 2 seconds for all saves to complete
+            // Wait for all saves
+            Promise.all(savePromises)
+                .then(() => {
+                    console.log('[MIGRATE LOCAL TO CLOUD] All saves completed!');
+                    // Mark as migrated
+                    localStorage.setItem('hasLoadedCloudData_' + cloudUser.email, 'true');
+                    
+                    // Wait extra 3 seconds for Google Sheets to process, then reload
+                    setTimeout(() => {
+                        console.log('[MIGRATE LOCAL TO CLOUD] Loading from cloud...');
+                        loadCloudData();
+                        alert(`✅ ${dates.length} записа са качени в облака!`);
+                    }, 3000);
+                })
+                .catch(error => {
+                    console.error('[MIGRATE LOCAL TO CLOUD ERROR]', error);
+                    alert('❌ Грешка при миграция! Опитай отново.');
+                });
         }
 
         function checkMigrationNeeded() {
@@ -1368,21 +1379,31 @@
                             // Upload local data to cloud
                             console.log(`[MIGRATION START] Uploading ${localDataCount} records...`);
                             
-                            Object.keys(localDataBackup).forEach(date => {
+                            // Create array of promises
+                            const savePromises = Object.keys(localDataBackup).map(date => {
                                 const type = localDataBackup[date];
                                 console.log(`[MIGRATION] ${date} = ${type}`);
-                                saveToCloud(date, type);
+                                return saveToCloud(date, type);
                             });
                             
-                            // Mark as migrated
-                            localStorage.setItem('hasLoadedCloudData_' + cloudUser.email, 'true');
-                            
-                            // Wait a bit for saves to complete, then load from cloud
-                            setTimeout(() => {
-                                console.log('[MIGRATION] Loading from cloud...');
-                                loadCloudData();
-                                alert(`✅ ${localDataCount} записа са качени в облака!`);
-                            }, 2000);
+                            // Wait for ALL saves to complete
+                            Promise.all(savePromises)
+                                .then(() => {
+                                    console.log('[MIGRATION] All saves completed!');
+                                    // Mark as migrated
+                                    localStorage.setItem('hasLoadedCloudData_' + cloudUser.email, 'true');
+                                    
+                                    // Wait extra 3 seconds for Google Sheets to process
+                                    setTimeout(() => {
+                                        console.log('[MIGRATION] Loading from cloud...');
+                                        loadCloudData();
+                                        alert(`✅ ${localDataCount} записа са качени в облака!`);
+                                    }, 3000);
+                                })
+                                .catch(error => {
+                                    console.error('[MIGRATION ERROR]', error);
+                                    alert('❌ Грешка при качване на данни! Опитай отново.');
+                                });
                         } else {
                             // Mark as migrated (user chose not to migrate)
                             localStorage.setItem('hasLoadedCloudData_' + cloudUser.email, 'true');
