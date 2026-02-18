@@ -1082,13 +1082,8 @@
         // Set today's date in input
         document.getElementById('dateInput').valueAsDate = new Date();
         
-        // Load cloud data if logged in
-        if (cloudUser && cloudUser.email) {
-            loadCloudData();
-        } else {
-            // Initial display with local data
-            updateDisplay();
-        }
+        // Check if migration is needed or load cloud data
+        checkMigrationNeeded();
         
         updateCloudStatusBadge();
 
@@ -1161,11 +1156,47 @@
                 uploaded++;
             });
             
+            // Mark as migrated
+            localStorage.setItem('hasLoadedCloudData_' + cloudUser.email, 'true');
+            
             // After migration, load cloud data to ensure sync
             setTimeout(() => {
                 loadCloudData();
                 alert(`✅ ${uploaded} записа са качени в облака!`);
             }, 2000); // Wait 2 seconds for all saves to complete
+        }
+
+        function checkMigrationNeeded() {
+            if (!cloudUser || !cloudUser.email) {
+                updateDisplay();
+                return;
+            }
+            
+            const localDataCount = Object.keys(attendanceData).length;
+            const hasLoadedCloudData = localStorage.getItem('hasLoadedCloudData_' + cloudUser.email);
+            
+            if (!hasLoadedCloudData && localDataCount > 0) {
+                // First time loading with local data - offer migration
+                const migrate = confirm(
+                    `💾 → ☁️ Миграция към облак\n\n` +
+                    `Намерени ${localDataCount} локални записа.\n\n` +
+                    `Искаш ли да ги синхронизираш с облака?\n\n` +
+                    `OK = Да, качи ги\n` +
+                    `Cancel = Не, използвай само облачните данни`
+                );
+                
+                if (migrate) {
+                    migrateLocalToCloud();
+                } else {
+                    localStorage.setItem('hasLoadedCloudData_' + cloudUser.email, 'true');
+                    attendanceData = {};
+                    localStorage.setItem('attendanceData', JSON.stringify(attendanceData));
+                    loadCloudData();
+                }
+            } else {
+                // Already migrated or no local data - just load cloud
+                loadCloudData();
+            }
         }
 
         // ============================================
@@ -1306,8 +1337,9 @@
                     updateCloudStatusBadge();
                     closeLoginModal();
                     
-                    // Check if there's local data to migrate
-                    const localDataCount = Object.keys(attendanceData).length;
+                    // IMPORTANT: Save local data before loading from cloud
+                    const localDataBackup = JSON.parse(JSON.stringify(attendanceData));
+                    const localDataCount = Object.keys(localDataBackup).length;
                     
                     if (localDataCount > 0) {
                         const migrate = confirm(
@@ -1320,8 +1352,23 @@
                         
                         if (migrate) {
                             // Upload local data to cloud
-                            migrateLocalToCloud();
+                            Object.keys(localDataBackup).forEach(date => {
+                                const type = localDataBackup[date];
+                                saveToCloud(date, type);
+                            });
+                            
+                            // Mark as migrated
+                            localStorage.setItem('hasLoadedCloudData_' + cloudUser.email, 'true');
+                            
+                            // Wait a bit for saves to complete, then load from cloud
+                            setTimeout(() => {
+                                loadCloudData();
+                                alert(`✅ ${localDataCount} записа са качени в облака!`);
+                            }, 2000);
                         } else {
+                            // Mark as migrated (user chose not to migrate)
+                            localStorage.setItem('hasLoadedCloudData_' + cloudUser.email, 'true');
+                            
                             // Clear local and use only cloud data
                             attendanceData = {};
                             localStorage.setItem('attendanceData', JSON.stringify(attendanceData));
@@ -1329,6 +1376,7 @@
                         }
                     } else {
                         // No local data, just load from cloud
+                        localStorage.setItem('hasLoadedCloudData_' + cloudUser.email, 'true');
                         loadCloudData();
                     }
                     
