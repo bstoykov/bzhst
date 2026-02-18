@@ -1067,7 +1067,7 @@
         // ============================================
         // CONFIGURATION
         // ============================================
-        const GOOGLE_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxYHGTlOigjA0O-dVm_haXkz5Q0N3kVVcImFkeChSfV3b8BID9ofmSYk0CMOQepaHD8Sg/exec';
+        const GOOGLE_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwrScdMzjedy0t2fKTMsK2Hq1XY66m3kErcBlDwktNJfAy_vPwn5UP3Mbcj7tmZssU2Aw/exec';
         
         // ============================================
         // GLOBAL STATE
@@ -1082,9 +1082,91 @@
         // Set today's date in input
         document.getElementById('dateInput').valueAsDate = new Date();
         
-        // Initial display
-        updateDisplay();
+        // Load cloud data if logged in
+        if (cloudUser && cloudUser.email) {
+            loadCloudData();
+        } else {
+            // Initial display with local data
+            updateDisplay();
+        }
+        
         updateCloudStatusBadge();
+
+        // ============================================
+        // CLOUD DATA SYNC
+        // ============================================
+        function loadCloudData() {
+            const callbackName = 'loadCallback_' + Date.now();
+            
+            window[callbackName] = function(result) {
+                document.getElementById(callbackName + '_script').remove();
+                delete window[callbackName];
+                
+                if (result.success && result.data) {
+                    // Merge cloud data with local data
+                    attendanceData = result.data;
+                    localStorage.setItem('attendanceData', JSON.stringify(attendanceData));
+                    updateDisplay();
+                } else {
+                    // No cloud data or error, use local data
+                    updateDisplay();
+                }
+            };
+            
+            const url = `${GOOGLE_APPS_SCRIPT_URL}?action=loadAttendance&email=${encodeURIComponent(cloudUser.email)}&callback=${callbackName}`;
+            const script = document.createElement('script');
+            script.id = callbackName + '_script';
+            script.src = url;
+            script.onerror = function() {
+                console.error('Failed to load cloud data');
+                document.getElementById(callbackName + '_script').remove();
+                delete window[callbackName];
+                updateDisplay();
+            };
+            document.body.appendChild(script);
+        }
+
+        function saveToCloud(date, type) {
+            if (!cloudUser || !cloudUser.email) return;
+            
+            // Use no-cors for saving (we don't need response)
+            fetch(GOOGLE_APPS_SCRIPT_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'saveAttendance',
+                    email: cloudUser.email,
+                    date: date,
+                    type: type
+                })
+            }).catch(error => {
+                console.error('Failed to save to cloud:', error);
+            });
+        }
+
+        function migrateLocalToCloud() {
+            if (!cloudUser || !cloudUser.email) return;
+            
+            const localData = attendanceData;
+            const dates = Object.keys(localData);
+            
+            if (dates.length === 0) return;
+            
+            // Upload all local data to cloud
+            let uploaded = 0;
+            dates.forEach(date => {
+                const type = localData[date];
+                saveToCloud(date, type);
+                uploaded++;
+            });
+            
+            // After migration, load cloud data to ensure sync
+            setTimeout(() => {
+                loadCloudData();
+                alert(`✅ ${uploaded} записа са качени в облака!`);
+            }, 2000); // Wait 2 seconds for all saves to complete
+        }
 
         // ============================================
         // CLOUD STATUS BADGE
@@ -1223,6 +1305,33 @@
                     localStorage.setItem('cloudUser', JSON.stringify(cloudUser));
                     updateCloudStatusBadge();
                     closeLoginModal();
+                    
+                    // Check if there's local data to migrate
+                    const localDataCount = Object.keys(attendanceData).length;
+                    
+                    if (localDataCount > 0) {
+                        const migrate = confirm(
+                            `💾 → ☁️ Миграция към облак\n\n` +
+                            `Намерени ${localDataCount} локални записа.\n\n` +
+                            `Искаш ли да ги синхронизираш с облака?\n\n` +
+                            `OK = Да, качи ги\n` +
+                            `Cancel = Не, използвай само облачните данни`
+                        );
+                        
+                        if (migrate) {
+                            // Upload local data to cloud
+                            migrateLocalToCloud();
+                        } else {
+                            // Clear local and use only cloud data
+                            attendanceData = {};
+                            localStorage.setItem('attendanceData', JSON.stringify(attendanceData));
+                            loadCloudData();
+                        }
+                    } else {
+                        // No local data, just load from cloud
+                        loadCloudData();
+                    }
+                    
                     openCloudModal();
                     updateCloudModalView();
                     alert('✅ Успешен вход!');
@@ -1481,6 +1590,11 @@
 
             attendanceData[dateInput] = type;
             localStorage.setItem('attendanceData', JSON.stringify(attendanceData));
+            
+            // Save to cloud if logged in
+            if (cloudUser && cloudUser.email) {
+                saveToCloud(dateInput, type);
+            }
             
             updateDisplay();
             
