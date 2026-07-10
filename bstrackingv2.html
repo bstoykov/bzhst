@@ -984,110 +984,121 @@
 
                 <!-- Logged In View -->
                 <div id="cloudLoggedIn" class="hidden">
-                    <div class="info-section">
-                        <div style="background: #f0f4ff; padding: 15px; border-radius: 10px; margin-bottom: 20px;">
-                            <p style="margin: 0;"><strong>👤 Потребител:</strong> <span id="cloudUserEmail"></span></p>
-                        </div>
-                        
-                        <h3>📧 Изпращане на отчети</h3>
-                        
-                        <button onclick="sendToMyEmail()" style="width: 100%; padding: 15px; margin: 10px 0; background: #4CAF50; color: white; border: none; border-radius: 10px; font-size: 1.1em; cursor: pointer; font-weight: bold;">
-                            📧 Изпрати на моя email
-                        </button>
-                        <p style="font-size: 0.9em; color: #666; margin: 5px 0 20px 0;">Изпрати отчет на <span id="cloudUserEmailShort"></span></p>
-                        
-                        <button onclick="showSendToOthers()" style="width: 100%; padding: 15px; margin: 10px 0; background: #2196F3; color: white; border: none; border-radius: 10px; font-size: 1.1em; cursor: pointer; font-weight: bold;">
-                            📧 Изпрати до друг/други
-                        </button>
-                        <p style="font-size: 0.9em; color: #666; margin: 5px 0;">Въведи email адреси на получатели</p>
+                    <div style="background: #f0f4ff; padding: 15px; border-radius: 10px; margin-bottom: 20px;">
+                        <p style="margin: 0;"><strong>👤 Потребител:</strong> <span id="cloudUserEmail"></span></p>
                     </div>
 
-                    <div class="info-section">
-                        <div style="display: flex; justify-content: space-between; align-items: center; background: #f5f5f5; padding: 15px; border-radius: 10px;">
-                            <span>📱 Telegram бот <span style="background: #FF9800; color: white; font-size: 0.7em; padding: 3px 10px; border-radius: 10px; margin-left: 5px;">SOON</span></span>
-                            <button onclick="openInfoFromCloud('cloud')" style="padding: 8px 16px; background: #667eea; color: white; border: none; border-radius: 8px; font-size: 0.85em; cursor: pointer; font-weight: bold; white-space: nowrap;">
-                                ℹ️ Виж повече
-                            </button>
-                        </div>
+                    <div style="display: flex; gap: 10px; margin-bottom: 25px; flex-wrap: wrap;">
+                        <button onclick="showCloudTab('emails')" id="cloudTabBtn-emails" class="period-btn" style="flex: 1; min-width: 100px;">📧 Имейли</button>
+                        <button onclick="showCloudTab('goals')" id="cloudTabBtn-goals" class="period-btn" style="flex: 1; min-width: 100px;">🎯 Офис цели</button>
+                        <button onclick="showCloudTab('account')" id="cloudTabBtn-account" class="period-btn" style="flex: 1; min-width: 100px;">👤 Акаунт</button>
                     </div>
 
-                    <hr style="margin: 30px 0; border: none; border-top: 2px solid #e0e0e0;">
-
-                    <div class="info-section">
-                        <h3>⏰ Автоматично изпращане</h3>
-                        
-                        <div style="background: #f5f5f5; padding: 15px; border-radius: 10px; margin: 10px 0;">
-                            <label style="display: flex; align-items: center; cursor: pointer; margin-bottom: 10px;">
-                                <input type="checkbox" id="autoSendToMe" onchange="toggleAutoSend('me')" style="margin-right: 10px; width: 20px; height: 20px;">
-                                <span>На моя email на всеки 4 дни</span>
-                            </label>
+                    <!-- Tab: Имейли -->
+                    <div id="cloudTab-emails">
+                        <div class="info-section">
+                            <h3>📧 Изпращане на отчети</h3>
                             
-                            <label style="display: flex; align-items: center; cursor: pointer;">
-                                <input type="checkbox" id="autoSendToManager" onchange="toggleAutoSend('manager')" style="margin-right: 10px; width: 20px; height: 20px;">
-                                <span>До мениджъра (<span id="managerEmail">не е зададен</span>)</span>
-                            </label>
-                        </div>
-                        
-                        <button onclick="setManagerEmail()" style="width: 100%; padding: 12px; margin: 10px 0; background: #e0e0e0; color: #333; border: none; border-radius: 10px; font-size: 1em; cursor: pointer; font-weight: bold;">
-                            ✏️ Задай email на мениджър
-                        </button>
-                    </div>
-
-                    <hr style="margin: 30px 0; border: none; border-top: 2px solid #e0e0e0;">
-
-                    <div class="info-section">
-                        <h3>🎯 Целеви % за офис</h3>
-                        <p style="font-size: 0.9em; color: #666; margin-bottom: 15px;">
-                            По подразбиране: 60% (3 дни офис / 2 дни home office). Промени го ако имаш различен работен план.
-                        </p>
-
-                        <div style="background: #f0f4ff; padding: 15px; border-radius: 10px; margin-bottom: 15px;">
-                            <p style="margin: 0 0 10px 0; font-size: 0.95em;">Текуща цел: <strong id="currentTargetPercentDisplay" style="color: #667eea;">60%</strong></p>
+                            <button onclick="sendToMyEmail()" style="width: 100%; padding: 15px; margin: 10px 0; background: #4CAF50; color: white; border: none; border-radius: 10px; font-size: 1.1em; cursor: pointer; font-weight: bold;">
+                                📧 Изпрати на моя email
+                            </button>
+                            <p style="font-size: 0.9em; color: #666; margin: 5px 0 20px 0;">Изпрати отчет на <span id="cloudUserEmailShort"></span></p>
+                            
+                            <button onclick="showSendToOthers()" style="width: 100%; padding: 15px; margin: 10px 0; background: #2196F3; color: white; border: none; border-radius: 10px; font-size: 1.1em; cursor: pointer; font-weight: bold;">
+                                📧 Изпрати до друг/други
+                            </button>
+                            <p style="font-size: 0.9em; color: #666; margin: 5px 0;">Въведи email адреси на получатели</p>
                         </div>
 
-                        <div style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap;">
-                            <button onclick="setTargetPercentPreset(60)" class="period-btn" style="flex: 1; min-width: 80px;">60/40</button>
-                            <button onclick="setTargetPercentPreset(70)" class="period-btn" style="flex: 1; min-width: 80px;">70/30</button>
-                            <button onclick="setTargetPercentPreset(80)" class="period-btn" style="flex: 1; min-width: 80px;">80/20</button>
+                        <div class="info-section">
+                            <div style="display: flex; justify-content: space-between; align-items: center; background: #f5f5f5; padding: 15px; border-radius: 10px;">
+                                <span>📱 Telegram бот <span style="background: #FF9800; color: white; font-size: 0.7em; padding: 3px 10px; border-radius: 10px; margin-left: 5px;">SOON</span></span>
+                                <button onclick="openInfoFromCloud('cloud')" style="padding: 8px 16px; background: #667eea; color: white; border: none; border-radius: 8px; font-size: 0.85em; cursor: pointer; font-weight: bold; white-space: nowrap;">
+                                    ℹ️ Виж повече
+                                </button>
+                            </div>
                         </div>
 
-                        <div style="display: flex; gap: 10px; align-items: center;">
-                            <input type="number" id="customTargetPercent" min="1" max="100" placeholder="напр. 65" style="flex: 1; padding: 12px; border: 2px solid #e0e0e0; border-radius: 10px; font-size: 1em;">
-                            <button onclick="setCustomTargetPercent()" style="padding: 12px 20px; background: #667eea; color: white; border: none; border-radius: 10px; font-size: 1em; cursor: pointer; font-weight: bold; white-space: nowrap;">
-                                ✅ Запази
+                        <hr style="margin: 30px 0; border: none; border-top: 2px solid #e0e0e0;">
+
+                        <div class="info-section">
+                            <h3>⏰ Автоматично изпращане</h3>
+                            
+                            <div style="background: #f5f5f5; padding: 15px; border-radius: 10px; margin: 10px 0;">
+                                <label style="display: flex; align-items: center; cursor: pointer; margin-bottom: 10px;">
+                                    <input type="checkbox" id="autoSendToMe" onchange="toggleAutoSend('me')" style="margin-right: 10px; width: 20px; height: 20px;">
+                                    <span>На моя email на всеки 4 дни</span>
+                                </label>
+                                
+                                <label style="display: flex; align-items: center; cursor: pointer;">
+                                    <input type="checkbox" id="autoSendToManager" onchange="toggleAutoSend('manager')" style="margin-right: 10px; width: 20px; height: 20px;">
+                                    <span>До мениджъра (<span id="managerEmail">не е зададен</span>)</span>
+                                </label>
+                            </div>
+                            
+                            <button onclick="setManagerEmail()" style="width: 100%; padding: 12px; margin: 10px 0; background: #e0e0e0; color: #333; border: none; border-radius: 10px; font-size: 1em; cursor: pointer; font-weight: bold;">
+                                ✏️ Задай email на мениджър
                             </button>
                         </div>
                     </div>
 
-                    <hr style="margin: 30px 0; border: none; border-top: 2px solid #e0e0e0;">
+                    <!-- Tab: Цели -->
+                    <div id="cloudTab-goals" class="hidden">
+                        <div class="info-section">
+                            <h3>🎯 Целеви % за офис</h3>
+                            <p style="font-size: 0.9em; color: #666; margin-bottom: 15px;">
+                                По подразбиране: 60% (3 дни офис / 2 дни home office). Промени го ако имаш различен работен план.
+                            </p>
 
-                    <div class="info-section">
-                        <h3>📅 Дефолтен период при отваряне</h3>
-                        <p style="font-size: 0.9em; color: #666; margin-bottom: 15px;">
-                            Кой изглед да се показва автоматично, когато отвориш приложението. По подразбиране: Тримесечие.
-                        </p>
+                            <div style="background: #f0f4ff; padding: 15px; border-radius: 10px; margin-bottom: 15px;">
+                                <p style="margin: 0 0 10px 0; font-size: 0.95em;">Текуща цел: <strong id="currentTargetPercentDisplay" style="color: #667eea;">60%</strong></p>
+                            </div>
 
-                        <div style="background: #f0f4ff; padding: 15px; border-radius: 10px; margin-bottom: 15px;">
-                            <p style="margin: 0; font-size: 0.95em;">Текущ избор: <strong id="currentDefaultPeriodDisplay" style="color: #667eea;">Тримесечие</strong></p>
+                            <div style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap;">
+                                <button onclick="setTargetPercentPreset(60)" class="period-btn" style="flex: 1; min-width: 80px;">60/40</button>
+                                <button onclick="setTargetPercentPreset(70)" class="period-btn" style="flex: 1; min-width: 80px;">70/30</button>
+                                <button onclick="setTargetPercentPreset(80)" class="period-btn" style="flex: 1; min-width: 80px;">80/20</button>
+                            </div>
+
+                            <div style="display: flex; gap: 10px; align-items: center;">
+                                <input type="number" id="customTargetPercent" min="1" max="100" placeholder="напр. 65" style="flex: 1; padding: 12px; border: 2px solid #e0e0e0; border-radius: 10px; font-size: 1em;">
+                                <button onclick="setCustomTargetPercent()" style="padding: 12px 20px; background: #667eea; color: white; border: none; border-radius: 10px; font-size: 1em; cursor: pointer; font-weight: bold; white-space: nowrap;">
+                                    ✅ Запази
+                                </button>
+                            </div>
                         </div>
 
-                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                            <button onclick="setDefaultPeriodPreference('week')" class="period-btn" style="flex: 1; min-width: 80px;">Седмица</button>
-                            <button onclick="setDefaultPeriodPreference('month')" class="period-btn" style="flex: 1; min-width: 80px;">Месец</button>
-                            <button onclick="setDefaultPeriodPreference('quarter')" class="period-btn" style="flex: 1; min-width: 80px;">Тримесечие</button>
+                        <hr style="margin: 30px 0; border: none; border-top: 2px solid #e0e0e0;">
+
+                        <div class="info-section">
+                            <h3>📅 Дефолтен период при отваряне</h3>
+                            <p style="font-size: 0.9em; color: #666; margin-bottom: 15px;">
+                                Кой изглед да се показва автоматично, когато отвориш приложението. По подразбиране: Тримесечие.
+                            </p>
+
+                            <div style="background: #f0f4ff; padding: 15px; border-radius: 10px; margin-bottom: 15px;">
+                                <p style="margin: 0; font-size: 0.95em;">Текущ избор: <strong id="currentDefaultPeriodDisplay" style="color: #667eea;">Тримесечие</strong></p>
+                            </div>
+
+                            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                                <button onclick="setDefaultPeriodPreference('week')" class="period-btn" style="flex: 1; min-width: 80px;">Седмица</button>
+                                <button onclick="setDefaultPeriodPreference('month')" class="period-btn" style="flex: 1; min-width: 80px;">Месец</button>
+                                <button onclick="setDefaultPeriodPreference('quarter')" class="period-btn" style="flex: 1; min-width: 80px;">Тримесечие</button>
+                            </div>
                         </div>
                     </div>
 
-                    <hr style="margin: 30px 0; border: none; border-top: 2px solid #e0e0e0;">
-
-                    <div class="info-section">
-                        <h3>🔑 Смяна на парола</h3>
-                        <input type="password" id="changePasswordCurrent" class="auth-input" placeholder="Текуща парола">
-                        <input type="password" id="changePasswordNew" class="auth-input" placeholder="Нова парола (мин. 6 символа)">
-                        <input type="password" id="changePasswordConfirm" class="auth-input" placeholder="Потвърди нова парола">
-                        <button onclick="doChangePassword()" style="width: 100%; padding: 12px; margin: 10px 0; background: #667eea; color: white; border: none; border-radius: 10px; font-size: 1em; cursor: pointer; font-weight: bold;">
-                            🔑 Смени паролата
-                        </button>
+                    <!-- Tab: Акаунт -->
+                    <div id="cloudTab-account" class="hidden">
+                        <div class="info-section">
+                            <h3>🔑 Смяна на парола</h3>
+                            <input type="password" id="changePasswordCurrent" class="auth-input" placeholder="Текуща парола">
+                            <input type="password" id="changePasswordNew" class="auth-input" placeholder="Нова парола (мин. 6 символа)">
+                            <input type="password" id="changePasswordConfirm" class="auth-input" placeholder="Потвърди нова парола">
+                            <button onclick="doChangePassword()" style="width: 100%; padding: 12px; margin: 10px 0; background: #667eea; color: white; border: none; border-radius: 10px; font-size: 1em; cursor: pointer; font-weight: bold;">
+                                🔑 Смени паролата
+                            </button>
+                        </div>
                     </div>
 
                     <hr style="margin: 30px 0; border: none; border-top: 2px solid #e0e0e0;">
@@ -1452,10 +1463,19 @@
                 document.getElementById('currentTargetPercentDisplay').textContent = `${targetPercent}% / ${100 - targetPercent}%`;
                 
                 document.getElementById('currentDefaultPeriodDisplay').textContent = periodLabel(cloudUser.defaultPeriod || 'quarter');
+                
+                showCloudTab('emails');
             } else {
                 document.getElementById('cloudNotLoggedIn').classList.remove('hidden');
                 document.getElementById('cloudLoggedIn').classList.add('hidden');
             }
+        }
+
+        function showCloudTab(tab) {
+            ['emails', 'goals', 'account'].forEach(t => {
+                document.getElementById('cloudTab-' + t).classList.toggle('hidden', t !== tab);
+                document.getElementById('cloudTabBtn-' + t).classList.toggle('active', t === tab);
+            });
         }
 
         // ============================================
