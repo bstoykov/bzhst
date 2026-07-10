@@ -711,7 +711,7 @@
             </p>
             <div style="margin-top: 20px; display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
                 <button class="btn-info" onclick="openInfoModal()">
-                    ℹ️ Информация - Як работи?
+                    ℹ️ Информация - Как работи?
                 </button>
                 <button class="btn-info" onclick="openLocalModal()">
                     💾 Локално
@@ -796,70 +796,98 @@
                 <button class="close-btn" onclick="closeInfoModal()">&times;</button>
             </div>
             <div class="modal-body">
-                <div class="info-section">
-                    <h3>🏢 Офис бутон</h3>
-                    <p>Маркирай дните когато си бил физически в офиса. Тези дни се броят към комплайънс целта от 60%.</p>
+                <div style="display: flex; gap: 10px; margin-bottom: 25px; flex-wrap: wrap;">
+                    <button onclick="showInfoTab('general')" id="infoTabBtn-general" class="period-btn" style="flex: 1; min-width: 100px;">📖 Как работи</button>
+                    <button onclick="showInfoTab('local')" id="infoTabBtn-local" class="period-btn" style="flex: 1; min-width: 100px;">💾 Локално</button>
+                    <button onclick="showInfoTab('cloud')" id="infoTabBtn-cloud" class="period-btn" style="flex: 1; min-width: 100px;">☁️ Облак</button>
                 </div>
 
-                <div class="info-section">
-                    <h3>🏠 Home Office бутон</h3>
-                    <p><strong>Можеш да маркираш изрично</strong> или да оставиш празно - минали работни дни без маркировка автоматично се броят като Home Office.</p>
-                    <p style="font-size: 0.9em; color: #666;">• Маркирани home office дни → тъмно синьо с 🏠</p>
-                    <p style="font-size: 0.9em; color: #666;">• Автоматични home office → светло синьо с 📱</p>
+                <!-- Tab: Как работи -->
+                <div id="infoTab-general">
+                    <div class="info-section">
+                        <h3>🏢 Офис бутон</h3>
+                        <p>Маркирай дните когато си бил физически в офиса. Тези дни се броят към комплайънс целта от 60%.</p>
+                    </div>
+
+                    <div class="info-section">
+                        <h3>🏠 Home Office бутон</h3>
+                        <p><strong>Можеш да маркираш изрично</strong> или да оставиш празно - минали работни дни без маркировка автоматично се броят като Home Office.</p>
+                        <p style="font-size: 0.9em; color: #666;">• Маркирани home office дни → тъмно синьо с 🏠</p>
+                        <p style="font-size: 0.9em; color: #666;">• Автоматични home office → светло синьо с 📱</p>
+                    </div>
+
+                    <div class="info-section">
+                        <h3>🌴 Почивка/Болничен бутон</h3>
+                        <p>Маркирай отпуски, болнични и празници. Тези дни се <strong>приспадат</strong> от общите работни дни и НЕ влияят негативно на комплайънса.</p>
+                    </div>
+
+                    <div class="info-section">
+                        <h3>🎉 Празник бутон</h3>
+                        <p>За официални празници (1 януари, 3 март и т.н.). Приспадат се от комплайънс изчислението.</p>
+                    </div>
+
+                    <div class="info-highlight">
+                        <h3>🎯 Комплайънс цел: 60%</h3>
+                        <p><strong>Как се изчислява:</strong></p>
+                        <p>Общо работни дни - Почивки - Празници = Налични дни</p>
+                        <p>Налични дни × 60% = Необходими офис дни</p>
+                        <p><em>Пример: 60 работни дни - 5 почивки = 55 дни → Нужни 33 офис дни (60%)</em></p>
+                        <p style="font-size: 0.85em; color: #667eea; margin-top: 10px;">💡 Целта може да се персонализира (напр. 70/30, 80/20) от "☁️ Облак" модала, ако си регистриран.</p>
+                    </div>
+
+                    <div class="info-section">
+                        <h3>📊 Периоди за проследяване</h3>
+                        <p><strong>Седмица</strong> - текущата седмица (Пн-Нд)</p>
+                        <p><strong>Месец</strong> - текущият месец (автоматично се сменя)</p>
+                        <p><strong>Тримесечие</strong> - Q1 (Ян-Мар), Q2 (Апр-Юни), Q3 (Юли-Сеп), Q4 (Окт-Дек)</p>
+                    </div>
+
+                    <div class="info-section">
+                        <h3>🎨 Цветова легенда</h3>
+                        <p>🟢 Зелено - Офис | 🔵 Синьо - Home Office (маркиран)</p>
+                        <p>🔷 Светло синьо - Home Office (автоматично) | 🟠 Оранжево - Почивка</p>
+                        <p>🟣 Лилаво - Празник | ⚪ Сиво - Уикенд</p>
+                    </div>
+
+                    <div class="info-highlight" style="background: #d4edda; border-color: #4CAF50;">
+                        <p style="margin: 0; font-weight: bold; color: #155724;">💡 Съвет: Маркирай само офис дните и почивките - останалото се брои автоматично като home office!</p>
+                    </div>
                 </div>
 
-                <div class="info-section">
-                    <h3>🌴 Почивка/Болничен бутон</h3>
-                    <p>Маркирай отпуски, болнични и празници. Тези дни се <strong>приспадат</strong> от общите работни дни и НЕ влияят негативно на комплайънса.</p>
+                <!-- Tab: Локално -->
+                <div id="infoTab-local" class="hidden">
+                    <div class="info-section">
+                        <h3>💾 Локално запазване</h3>
+                        <p>Данните се съхраняват <strong>локално в браузъра</strong> на това устройство.</p>
+                        <p><strong>✅ Плюсове:</strong></p>
+                        <p style="margin-left: 20px;">• Работи офлайн<br>• Без нужда от регистрация<br>• Пълна поверителност</p>
+                        <p><strong>⚠️ Ограничения:</strong></p>
+                        <p style="margin-left: 20px;">• Всяко устройство има отделни данни<br>• Телефон и компютър - различни записи<br>• Ръчно изпращане на отчети</p>
+                    </div>
                 </div>
 
-                <div class="info-section">
-                    <h3>🎉 Празник бутон</h3>
-                    <p>За официални празници (1 януари, 3 март и т.н.). Приспадат се от комплайънс изчислението.</p>
-                </div>
+                <!-- Tab: Облак -->
+                <div id="infoTab-cloud" class="hidden">
+                    <div class="info-section">
+                        <h3>☁️ Облачен режим</h3>
+                        <p>Данните се съхраняват <strong>в облака</strong> и са достъпни от всички устройства.</p>
+                        <p><strong>✅ Плюсове:</strong></p>
+                        <p style="margin-left: 20px;">• Синхронизация между устройства<br>• Достъп от компютър И телефон<br>• Автоматични email отчети<br>• Scheduled изпращане на всеки 4 дни<br>• Изпращане до мениджър автоматично<br>• Персонализируема цел (60/40, 70/30 и т.н.) - важи автоматично на седмична, месечна и тримесечна база<br>• Смяна на парола / забравена парола</p>
+                        <p><strong>ℹ️ За използване:</strong></p>
+                        <p style="margin-left: 20px;">• Изисква регистрация<br>• Натисни "☁️ Облак" → "Регистрирай се"</p>
+                    </div>
 
-                <div class="info-highlight">
-                    <h3>🎯 Комплайънс цел: 60%</h3>
-                    <p><strong>Как се изчислява:</strong></p>
-                    <p>Общо работни дни - Почивки - Празници = Налични дни</p>
-                    <p>Налични дни × 60% = Необходими офис дни</p>
-                    <p><em>Пример: 60 работни дни - 5 почивки = 55 дни → Нужни 33 офис дни (60%)</em></p>
-                </div>
-
-                <div class="info-section">
-                    <h3>📊 Периоди за проследяване</h3>
-                    <p><strong>Седмица</strong> - текущата седмица (Пн-Нд)</p>
-                    <p><strong>Месец</strong> - текущият месец (автоматично се сменя)</p>
-                    <p><strong>Тримесечие</strong> - Q1 (Ян-Мар), Q2 (Апр-Юни), Q3 (Юли-Сеп), Q4 (Окт-Дек)</p>
-                </div>
-
-                <div class="info-section">
-                    <h3>💾 Локално запазване</h3>
-                    <p>Данните се съхраняват <strong>локално в браузъра</strong> на това устройство.</p>
-                    <p><strong>✅ Плюсове:</strong></p>
-                    <p style="margin-left: 20px;">• Работи офлайн<br>• Без нужда от регистрация<br>• Пълна поверителност</p>
-                    <p><strong>⚠️ Ограничения:</strong></p>
-                    <p style="margin-left: 20px;">• Всяко устройство има отделни данни<br>• Телефон и компютър - различни записи<br>• Ръчно изпращане на отчети</p>
-                </div>
-
-                <div class="info-section">
-                    <h3>☁️ Облачен режим</h3>
-                    <p>Данните се съхраняват <strong>в облака</strong> и са достъпни от всички устройства.</p>
-                    <p><strong>✅ Плюсове:</strong></p>
-                    <p style="margin-left: 20px;">• Синхронизация между устройства<br>• Достъп от компютър И телефон<br>• Автоматични email отчети<br>• Scheduled изпращане на всеки 4 дни<br>• Изпращане до мениджър автоматично</p>
-                    <p><strong>ℹ️ За използване:</strong></p>
-                    <p style="margin-left: 20px;">• Изисква регистрация<br>• Натисни "☁️ Облак" → "Регистрирай се"</p>
-                </div>
-
-                <div class="info-section">
-                    <h3>🎨 Цветова легенда</h3>
-                    <p>🟢 Зелено - Офис | 🔵 Синьо - Home Office (маркиран)</p>
-                    <p>🔷 Светло синьо - Home Office (автоматично) | 🟠 Оранжево - Почивка</p>
-                    <p>🟣 Лилаво - Празник | ⚪ Сиво - Уикенд</p>
-                </div>
-
-                <div class="info-highlight" style="background: #d4edda; border-color: #4CAF50;">
-                    <p style="margin: 0; font-weight: bold; color: #155724;">💡 Съвет: Маркирай само офис дните и почивките - останалото се брои автоматично като home office!</p>
+                    <div class="info-section">
+                        <h3>📱 Telegram бот <span style="background: #FF9800; color: white; font-size: 0.6em; padding: 3px 10px; border-radius: 10px; vertical-align: middle; margin-left: 5px;">SOON</span></h3>
+                        <p style="font-size: 0.9em; color: #666; margin-bottom: 10px;">
+                            Скоро ще можеш да свържеш акаунта си с Telegram бот - по желание, отключва се от "☁️ Облак".
+                        </p>
+                        <p style="font-size: 0.9em; color: #666; margin-left: 20px;">
+                            • Пишеш "офис", "хоум", "вакейшън" или "празник" директно на бота<br>
+                            • Автоматично отбелязва днешния ден в акаунта ти - без да отваряш приложението<br>
+                            • Свързва се еднократно с уникален код, после просто пишеш всеки ден
+                        </p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1051,6 +1079,17 @@
                         <button onclick="doChangePassword()" style="width: 100%; padding: 12px; margin: 10px 0; background: #667eea; color: white; border: none; border-radius: 10px; font-size: 1em; cursor: pointer; font-weight: bold;">
                             🔑 Смени паролата
                         </button>
+                    </div>
+
+                    <hr style="margin: 30px 0; border: none; border-top: 2px solid #e0e0e0;">
+
+                    <div class="info-section">
+                        <div style="display: flex; justify-content: space-between; align-items: center; background: #f5f5f5; padding: 15px; border-radius: 10px;">
+                            <span>📱 Telegram бот <span style="background: #FF9800; color: white; font-size: 0.7em; padding: 3px 10px; border-radius: 10px; margin-left: 5px;">SOON</span></span>
+                            <button onclick="openInfoFromCloud('cloud')" style="padding: 8px 16px; background: #667eea; color: white; border: none; border-radius: 8px; font-size: 0.85em; cursor: pointer; font-weight: bold; white-space: nowrap;">
+                                ℹ️ Виж повече
+                            </button>
+                        </div>
                     </div>
 
                     <hr style="margin: 30px 0; border: none; border-top: 2px solid #e0e0e0;">
@@ -2390,12 +2429,25 @@
         // Initial display
         updateDisplay();
 
-        function openInfoModal() {
+        function openInfoModal(tab) {
             document.getElementById('infoModal').style.display = 'block';
+            showInfoTab(tab || 'general');
+        }
+
+        function openInfoFromCloud(tab) {
+            closeCloudModal();
+            openInfoModal(tab);
         }
 
         function closeInfoModal() {
             document.getElementById('infoModal').style.display = 'none';
+        }
+
+        function showInfoTab(tab) {
+            ['general', 'local', 'cloud'].forEach(t => {
+                document.getElementById('infoTab-' + t).classList.toggle('hidden', t !== tab);
+                document.getElementById('infoTabBtn-' + t).classList.toggle('active', t === tab);
+            });
         }
 
         function openDataModal() {
