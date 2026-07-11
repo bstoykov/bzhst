@@ -1006,6 +1006,11 @@
                     <div id="cloudTab-emails">
                         <div class="info-section">
                             <h3>📱 Telegram бот</h3>
+                            <p style="font-size: 0.85em; color: #999; margin: -8px 0 15px 0;">
+                                статус: <strong id="telegramStatusLabel">неактивен</strong>
+                                &nbsp;·&nbsp;
+                                <a href="https://t.me/OfficetrackerBS_bot" target="_blank" style="font-size: 1em;">отвори бота →</a>
+                            </p>
                             
                             <div id="telegramNotLinked">
                                 <p style="font-size: 0.9em; color: #666; margin-bottom: 15px;">
@@ -1496,10 +1501,16 @@
                 if (cloudUser.telegramLinked) {
                     document.getElementById('telegramNotLinked').classList.add('hidden');
                     document.getElementById('telegramLinked').classList.remove('hidden');
+                    const statusLabel = document.getElementById('telegramStatusLabel');
+                    statusLabel.textContent = 'активен';
+                    statusLabel.style.color = '#4CAF50';
                 } else {
                     document.getElementById('telegramNotLinked').classList.remove('hidden');
                     document.getElementById('telegramLinked').classList.add('hidden');
                     document.getElementById('telegramCodeBox').classList.add('hidden');
+                    const statusLabel = document.getElementById('telegramStatusLabel');
+                    statusLabel.textContent = 'неактивен';
+                    statusLabel.style.color = '#999';
                 }
                 
                 showCloudTab('emails');
