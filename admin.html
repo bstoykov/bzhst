@@ -132,6 +132,10 @@
                     <div class="num" id="statAutoSend">0</div>
                     <div class="label">С включен auto-send</div>
                 </div>
+                <div class="stat-box">
+                    <div class="num" id="statTelegramLinked">0</div>
+                    <div class="label">📱 Свързани с Telegram</div>
+                </div>
             </div>
         </div>
 
@@ -148,6 +152,7 @@
                             <th>Статус</th>
                             <th>Цел %</th>
                             <th>Auto-send</th>
+                            <th>📱 Telegram</th>
                             <th>Действия</th>
                         </tr>
                     </thead>
@@ -277,6 +282,7 @@
         document.getElementById('statActive30').textContent = result.stats.activeLast30Days;
         document.getElementById('statEverLoggedIn').textContent = result.stats.everLoggedIn;
         document.getElementById('statAutoSend').textContent = result.stats.autoSendCount;
+        document.getElementById('statTelegramLinked').textContent = result.stats.telegramLinkedCount || 0;
 
         const tbody = document.getElementById('usersTableBody');
         tbody.innerHTML = '';
@@ -288,6 +294,9 @@
             const autoSendLabel = (user.autoSendToMe || user.autoSendToManager)
                 ? `${user.autoSendToMe ? '👤' : ''}${user.autoSendToManager ? '👔' : ''}`
                 : '—';
+            const telegramLabel = user.telegramLinked
+                ? `✅ <button class="btn-danger btn-small" onclick="unlinkUserTelegram('${escapeJs(user.email)}')">Премахни</button>`
+                : '—';
 
             row.innerHTML = `
                 <td>${escapeHtml(user.email)}</td>
@@ -297,6 +306,7 @@
                 <td class="${statusClass}">${statusLabel}</td>
                 <td>${user.targetPercent}%</td>
                 <td>${autoSendLabel}</td>
+                <td>${telegramLabel}</td>
                 <td>
                     <button class="btn-warning btn-small" onclick="resetUserPassword('${escapeJs(user.email)}')">🔑 Reset</button>
                     ${user.status === 'active'
@@ -367,6 +377,26 @@
         );
     }
 
+    function unlinkUserTelegram(email) {
+        if (!confirm(`Сигурен ли си че искаш да прекъснеш Telegram връзката на ${email}?`)) return;
+
+        jsonpRequest(
+            {
+                action: 'adminUnlinkTelegram',
+                adminPassword: ADMIN_PASSWORD,
+                githubToken: GITHUB_TOKEN,
+                targetEmail: email
+            },
+            function(result) {
+                alert('✅ ' + result.message);
+                loadDashboard();
+            },
+            function(err) {
+                alert('❌ ' + err);
+            }
+        );
+    }
+
     function deleteUser(email) {
         if (!confirm(`⚠️ ТРАЙНО ИЗТРИВАНЕ на ${email} и всичките му записи!\n\nТова НЕ МОЖЕ да се отмени. Продължи ли?`)) return;
         if (!confirm(`Последно потвърждение — наистина ли да изтрия ${email}?`)) return;
@@ -400,4 +430,3 @@
 </script>
 </body>
 </html>
-
