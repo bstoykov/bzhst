@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Офис Тракер - Календар</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 12px;
+            color: #333;
+        }
+
+        .container { max-width: 480px; margin: 0 auto; }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            padding: 8px 0 16px 0;
+        }
+
+        .header h1 { font-size: 1.3em; margin-bottom: 2px; }
+        .header p { font-size: 0.85em; opacity: 0.9; }
+
+        .period-cards {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .period-card {
+            background: white;
+            border-radius: 14px;
+            padding: 12px 14px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .period-card .period-label {
+            font-size: 0.8em;
+            font-weight: bold;
+            color: #667eea;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .period-card .period-sub {
+            font-size: 0.7em;
+            color: #999;
+            margin-top: 1px;
+        }
+
+        .period-card .period-stats {
+            display: flex;
+            gap: 14px;
+            text-align: center;
+        }
+
+        .period-card .pstat .num {
+            font-size: 1.15em;
+            font-weight: bold;
+        }
+
+        .period-card .pstat .lbl {
+            font-size: 0.62em;
+            color: #999;
+        }
+
+        .pstat.office .num { color: #4CAF50; }
+        .pstat.compliance.good .num { color: #4CAF50; }
+        .pstat.compliance.warn .num { color: #FF9800; }
+        .pstat.compliance.bad .num { color: #f44336; }
+        .pstat.remaining .num { color: #667eea; }
+
+        .month-title {
+            text-align: center;
+            font-weight: bold;
+            font-size: 1.05em;
+            color: #333;
+            margin-bottom: 12px;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+        }
+
+        .day-header {
+            text-align: center;
+            font-size: 0.7em;
+            font-weight: bold;
+            color: #667eea;
+            padding: 4px 0;
+        }
+
+        .calendar-day {
+            aspect-ratio: 1;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75em;
+            cursor: pointer;
+            border: 2px solid #e0e0e0;
+            transition: transform 0.15s;
+        }
+
+        .calendar-day:active { transform: scale(0.92); }
+        .calendar-day.empty { visibility: hidden; }
+
+        .day-office { background: #c8e6c9; border-color: #4CAF50; }
+        .day-home { background: #bbdefb; border-color: #2196F3; }
+        .day-vacation { background: #ffe0b2; border-color: #FF9800; }
+        .day-holiday { background: #e1bee7; border-color: #9C27B0; }
+        .day-weekend { background: #f5f5f5; color: #bbb; }
+        .day-empty-past { background: #fafafa; border-style: dashed; }
+
+        .day-number { font-weight: bold; }
+
+        /* Action sheet */
+        .sheet-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 100;
+            align-items: flex-end;
+        }
+
+        .sheet-overlay.open { display: flex; }
+
+        .sheet {
+            background: white;
+            width: 100%;
+            border-radius: 20px 20px 0 0;
+            padding: 20px;
+            animation: slideUp 0.2s ease;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+
+        .sheet h3 {
+            text-align: center;
+            margin-bottom: 16px;
+            color: #333;
+        }
+
+        .sheet-btn {
+            width: 100%;
+            padding: 14px;
+            margin-bottom: 8px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            color: white;
+        }
+
+        .sheet-btn.office { background: #4CAF50; }
+        .sheet-btn.home { background: #2196F3; }
+        .sheet-btn.vacation { background: #FF9800; }
+        .sheet-btn.holiday { background: #9C27B0; }
+        .sheet-btn.clear { background: #e0e0e0; color: #333; }
+        .sheet-btn.cancel { background: transparent; color: #999; }
+
+        .loading, .error-msg {
+            text-align: center;
+            color: white;
+            padding: 40px 20px;
+        }
+
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <div class="header">
+        <h1>📅 Офис Тракер</h1>
+        <p id="userNameLabel">Зареждане...</p>
+    </div>
+
+    <div id="loadingState" class="loading">
+        <p>⏳ Зареждане на данните...</p>
+    </div>
+
+    <div id="errorState" class="error-msg hidden">
+        <p id="errorText">⚠️ Възникна грешка.</p>
+    </div>
+
+    <div id="mainContent" class="hidden">
+        <div class="period-cards" id="periodCards"></div>
+
+        <div class="card">
+            <div class="month-title" id="monthTitle">-</div>
+            <div class="calendar-grid" id="calendarGrid"></div>
+        </div>
+
+        <p style="text-align: center; color: white; font-size: 0.75em; opacity: 0.8; margin-top: 8px;">
+            Кликни на ден за да го маркираш или премахнеш
+        </p>
+    </div>
+
+</div>
+
+<!-- Action Sheet -->
+<div class="sheet-overlay" id="sheetOverlay">
+    <div class="sheet">
+        <h3 id="sheetDateLabel">10 юли</h3>
+        <button class="sheet-btn office" onclick="markDay('office')">🏢 Офис</button>
+        <button class="sheet-btn home" onclick="markDay('home')">🏠 Home Office</button>
+        <button class="sheet-btn vacation" onclick="markDay('vacation')">🌴 Почивка</button>
+        <button class="sheet-btn holiday" onclick="markDay('holiday')">🎉 Празник</button>
+        <button class="sheet-btn clear" onclick="markDay('clear')">❌ Изчисти маркировка</button>
+        <button class="sheet-btn cancel" onclick="closeSheet()">Отказ</button>
+    </div>
+</div>
+
+<script>
+    const GOOGLE_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzqo9vlJPBLgHC-teWvC4TjCRglT_jyo0ZnE9JYv2ATzSabK73kebfo1jNVlLRDPsmd/exec';
+
+    const tg = window.Telegram && window.Telegram.WebApp;
+    if (tg) {
+        tg.ready();
+        tg.expand();
+    }
+
+    function getChatId() {
+        const params = new URLSearchParams(window.location.search);
+        const fromUrl = params.get('chatId');
+        if (fromUrl) return fromUrl;
+        if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
+            return tg.initDataUnsafe.user.id.toString();
+        }
+        return null;
+    }
+
+    const CHAT_ID = getChatId();
+    let attendanceData = {};
+    let targetPercent = 60;
+    let userEmail = null;
+    let selectedDateStr = null;
+
+    const monthNames = ['Януари', 'Февруари', 'Март', 'Април', 'Май', 'Юни',
+                         'Юли', 'Август', 'Септември', 'Октомври', 'Ноември', 'Декември'];
+    const dayNames = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'];
+
+    function jsonpRequest(params, onSuccess, onError) {
+        const callbackName = 'cb_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
+        window[callbackName] = function(result) {
+            const s = document.getElementById(callbackName + '_script');
+            if (s) s.remove();
+            delete window[callbackName];
+            if (result.success) onSuccess(result);
+            else onError(result.error || 'Грешка');
+        };
+        const query = new URLSearchParams({ ...params, callback: callbackName }).toString();
+        const script = document.createElement('script');
+        script.id = callbackName + '_script';
+        script.src = `${GOOGLE_APPS_SCRIPT_URL}?${query}`;
+        script.onerror = function() {
+            script.remove();
+            delete window[callbackName];
+            onError('Грешка при връзка със сървъра');
+        };
+        document.body.appendChild(script);
+    }
+
+    function loadData() {
+        if (!CHAT_ID) {
+            showError('Липсва връзка с Telegram акаунта. Отвори през бота.');
+            return;
+        }
+        jsonpRequest(
+            { action: 'getUserByTelegramChatId', chatId: CHAT_ID },
+            function(result) {
+                userEmail = result.email;
+                targetPercent = result.targetPercent || 60;
+                attendanceData = result.attendanceData || {};
+                document.getElementById('userNameLabel').textContent = result.name || result.email;
+                document.getElementById('loadingState').classList.add('hidden');
+                document.getElementById('mainContent').classList.remove('hidden');
+                renderMonth();
+                renderStats();
+            },
+            function(err) {
+                showError(err);
+            }
+        );
+    }
+
+    function showError(msg) {
+        document.getElementById('loadingState').classList.add('hidden');
+        document.getElementById('errorText').textContent = '⚠️ ' + msg;
+        document.getElementById('errorState').classList.remove('hidden');
+    }
+
+    function getDateRange(period) {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        let startDate, endDate;
+
+        if (period === 'week') {
+            const dow = today.getDay();
+            const diff = dow === 0 ? -6 : 1 - dow;
+            startDate = new Date(today);
+            startDate.setDate(today.getDate() + diff);
+            endDate = new Date(startDate);
+            endDate.setDate(startDate.getDate() + 6);
+        } else if (period === 'month') {
+            startDate = new Date(today.getFullYear(), today.getMonth(), 1);
+            endDate = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+        } else {
+            const qStartMonth = Math.floor(today.getMonth() / 3) * 3;
+            startDate = new Date(today.getFullYear(), qStartMonth, 1);
+            endDate = new Date(today.getFullYear(), qStartMonth + 3, 0);
+        }
+        return { startDate, endDate };
+    }
+
+    function getWorkingDaysInRange(startDate, endDate) {
+        let count = 0;
+        const current = new Date(startDate);
+        while (current <= endDate) {
+            const dow = current.getDay();
+            if (dow !== 0 && dow !== 6) count++;
+            current.setDate(current.getDate() + 1);
+        }
+        return count;
+    }
+
+    function calcPeriodStats(period) {
+        const { startDate, endDate } = getDateRange(period);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        let officeDays = 0, vacationDays = 0, holidayDays = 0;
+        const current = new Date(startDate);
+
+        while (current <= endDate) {
+            const dow = current.getDay();
+            if (dow !== 0 && dow !== 6) {
+                const dStr = formatDate(current);
+                const type = attendanceData[dStr];
+                if (type === 'office') officeDays++;
+                else if (type === 'vacation') vacationDays++;
+                else if (type === 'holiday') holidayDays++;
+            }
+            current.setDate(current.getDate() + 1);
+        }
+
+        const totalWorkingDays = getWorkingDaysInRange(startDate, endDate);
+        const availableDays = totalWorkingDays - vacationDays - holidayDays;
+        const targetOfficeDays = Math.round(availableDays * (targetPercent / 100));
+        const compliance = availableDays > 0 ? Math.round((officeDays / availableDays) * 100) : 0;
+        const remaining = Math.max(0, targetOfficeDays - officeDays);
+
+        return { officeDays, compliance, remaining };
+    }
+
+    function renderStats() {
+        const periods = [
+            { key: 'week', label: 'Седмица' },
+            { key: 'month', label: 'Месец' },
+            { key: 'quarter', label: 'Тримесечие' }
+        ];
+
+        let html = '';
+        periods.forEach(p => {
+            const s = calcPeriodStats(p.key);
+            let complianceCls = 'bad';
+            if (s.compliance >= targetPercent) complianceCls = 'good';
+            else if (s.compliance >= targetPercent - 10) complianceCls = 'warn';
+
+            html += `
+                <div class="period-card">
+                    <div>
+                        <div class="period-label">${p.label}</div>
+                        <div class="period-sub">цел ${targetPercent}%</div>
+                    </div>
+                    <div class="period-stats">
+                        <div class="pstat office">
+                            <div class="num">${s.officeDays}</div>
+                            <div class="lbl">🏢 офис</div>
+                        </div>
+                        <div class="pstat compliance ${complianceCls}">
+                            <div class="num">${s.compliance}%</div>
+                            <div class="lbl">🎯 комплайънс</div>
+                        </div>
+                        <div class="pstat remaining">
+                            <div class="num">${s.remaining}</div>
+                            <div class="lbl">⚡ остават</div>
+                        </div>
+                    </div>
+                </div>`;
+        });
+
+        document.getElementById('periodCards').innerHTML = html;
+    }
+
+    function formatDate(dateObj) {
+        const y = dateObj.getFullYear();
+        const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+        const d = String(dateObj.getDate()).padStart(2, '0');
+        return `${y}-${m}-${d}`;
+    }
+
+    function renderMonth() {
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = today.getMonth();
+
+        document.getElementById('monthTitle').textContent = `${monthNames[month]} ${year}`;
+
+        let html = '';
+        dayNames.forEach(d => {
+            html += `<div class="day-header">${d}</div>`;
+        });
+
+        const firstOfMonth = new Date(year, month, 1);
+        let firstWeekday = firstOfMonth.getDay();
+        firstWeekday = firstWeekday === 0 ? 6 : firstWeekday - 1; // Monday = 0
+
+        for (let i = 0; i < firstWeekday; i++) {
+            html += `<div class="calendar-day empty"></div>`;
+        }
+
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        const todayNorm = new Date(year, month, today.getDate());
+
+        for (let d = 1; d <= daysInMonth; d++) {
+            const dateObj = new Date(year, month, d);
+            const dStr = formatDate(dateObj);
+            const dow = dateObj.getDay();
+            const isWeekend = dow === 0 || dow === 6;
+            const type = attendanceData[dStr] || '';
+            const isPast = dateObj < todayNorm;
+
+            let cls = 'calendar-day';
+            let emoji = '';
+
+            if (isWeekend) {
+                cls += ' day-weekend';
+            } else if (type === 'office') {
+                cls += ' day-office'; emoji = '🏢';
+            } else if (type === 'home') {
+                cls += ' day-home'; emoji = '🏠';
+            } else if (type === 'vacation') {
+                cls += ' day-vacation'; emoji = '🌴';
+            } else if (type === 'holiday') {
+                cls += ' day-holiday'; emoji = '🎉';
+            } else if (isPast) {
+                cls += ' day-empty-past'; emoji = '📱';
+            }
+
+            html += `<div class="${cls}" onclick="openSheet('${dStr}', ${d})">
+                        <div class="day-number">${d}</div>
+                        <div>${emoji}</div>
+                     </div>`;
+        }
+
+        document.getElementById('calendarGrid').innerHTML = html;
+    }
+
+    function openSheet(dateStr, dayNum) {
+        selectedDateStr = dateStr;
+        const dateObj = new Date(dateStr + 'T00:00:00');
+        document.getElementById('sheetDateLabel').textContent = `${dayNum} ${monthNames[dateObj.getMonth()]}`;
+        document.getElementById('sheetOverlay').classList.add('open');
+    }
+
+    function closeSheet() {
+        document.getElementById('sheetOverlay').classList.remove('open');
+        selectedDateStr = null;
+    }
+
+    function markDay(type) {
+        if (!selectedDateStr || !CHAT_ID) return;
+
+        jsonpRequest(
+            { action: 'saveAttendanceByTelegramChatId', chatId: CHAT_ID, date: selectedDateStr, type: type },
+            function() {
+                if (type === 'clear') {
+                    delete attendanceData[selectedDateStr];
+                } else {
+                    attendanceData[selectedDateStr] = type;
+                }
+                closeSheet();
+                renderMonth();
+                renderStats();
+                if (tg && tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+            },
+            function(err) {
+                alert('❌ ' + err);
+            }
+        );
+    }
+
+    document.getElementById('sheetOverlay').addEventListener('click', function(e) {
+        if (e.target === this) closeSheet();
+    });
+
+    loadData();
+</script>
+</body>
+</html>
