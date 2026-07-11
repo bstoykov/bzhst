@@ -878,12 +878,12 @@
                     </div>
 
                     <div class="info-section">
-                        <h3>📱 Telegram бот <span style="background: #FF9800; color: white; font-size: 0.6em; padding: 3px 10px; border-radius: 10px; vertical-align: middle; margin-left: 5px;">SOON</span></h3>
+                        <h3>📱 Telegram бот</h3>
                         <p style="font-size: 0.9em; color: #666; margin-bottom: 10px;">
-                            Скоро ще можеш да свържеш акаунта си с Telegram бот - по желание, отключва се от "☁️ Облак".
+                            Можеш да свържеш акаунта си с Telegram бот - по желание, от "☁️ Облак" → "📧 Имейли".
                         </p>
                         <p style="font-size: 0.9em; color: #666; margin-left: 20px;">
-                            • Пишеш "офис", "хоум", "вакейшън" или "празник" директно на бота<br>
+                            • Пишеш "office", "home", "vacation" или "holiday" директно на бота<br>
                             • Автоматично отбелязва днешния ден в акаунта ти - без да отваряш приложението<br>
                             • Свързва се еднократно с уникален код, после просто пишеш всеки ден
                         </p>
@@ -997,10 +997,29 @@
                     <!-- Tab: Имейли -->
                     <div id="cloudTab-emails">
                         <div class="info-section">
-                            <div style="display: flex; justify-content: space-between; align-items: center; background: #f5f5f5; padding: 15px; border-radius: 10px;">
-                                <span>📱 Telegram бот <span style="background: #FF9800; color: white; font-size: 0.7em; padding: 3px 10px; border-radius: 10px; margin-left: 5px;">SOON</span></span>
-                                <button onclick="openInfoFromCloud('cloud')" style="padding: 8px 16px; background: #667eea; color: white; border: none; border-radius: 8px; font-size: 0.85em; cursor: pointer; font-weight: bold; white-space: nowrap;">
-                                    ℹ️ Виж повече
+                            <h3>📱 Telegram бот</h3>
+                            
+                            <div id="telegramNotLinked">
+                                <p style="font-size: 0.9em; color: #666; margin-bottom: 15px;">
+                                    Свържи акаунта си и пиши "office", "home", "vacation" или "holiday" директно на бота - маркира днешния ден автоматично.
+                                </p>
+                                <button onclick="doGenerateTelegramCode()" style="width: 100%; padding: 12px; margin: 10px 0; background: #2196F3; color: white; border: none; border-radius: 10px; font-size: 1em; cursor: pointer; font-weight: bold;">
+                                    🔗 Свържи Telegram
+                                </button>
+                                <div id="telegramCodeBox" class="hidden" style="background: #f0f4ff; padding: 15px; border-radius: 10px; margin-top: 15px;">
+                                    <p style="margin: 0 0 10px 0; font-size: 0.9em;">Изпрати това съобщение на <strong id="telegramBotUsernameDisplay"></strong> в Telegram:</p>
+                                    <div style="background: white; padding: 10px; border-radius: 8px; text-align: center; font-family: monospace; font-size: 1.1em; font-weight: bold; color: #667eea;">
+                                        /start <span id="telegramCodeDisplay"></span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div id="telegramLinked" class="hidden">
+                                <div style="background: #d4edda; padding: 15px; border-radius: 10px; margin-bottom: 15px;">
+                                    <p style="margin: 0; color: #155724; font-weight: bold;">✅ Свързан с Telegram</p>
+                                </div>
+                                <button onclick="doUnlinkTelegram()" style="width: 100%; padding: 12px; margin: 10px 0; background: #f44336; color: white; border: none; border-radius: 10px; font-size: 1em; cursor: pointer; font-weight: bold;">
+                                    🔌 Прекъсни връзка
                                 </button>
                             </div>
                         </div>
@@ -1466,6 +1485,15 @@
                 
                 document.getElementById('currentDefaultPeriodDisplay').textContent = periodLabel(cloudUser.defaultPeriod || 'quarter');
                 
+                if (cloudUser.telegramLinked) {
+                    document.getElementById('telegramNotLinked').classList.add('hidden');
+                    document.getElementById('telegramLinked').classList.remove('hidden');
+                } else {
+                    document.getElementById('telegramNotLinked').classList.remove('hidden');
+                    document.getElementById('telegramLinked').classList.add('hidden');
+                    document.getElementById('telegramCodeBox').classList.add('hidden');
+                }
+                
                 showCloudTab('emails');
             } else {
                 document.getElementById('cloudNotLoggedIn').classList.remove('hidden');
@@ -1647,7 +1675,8 @@
                         autoSendToManager: result.user.autoSendToManager || false,
                         managerEmail: result.user.managerEmail || null,
                         targetPercent: result.user.targetPercent || 60,
-                        defaultPeriod: result.user.defaultPeriod || 'quarter'
+                        defaultPeriod: result.user.defaultPeriod || 'quarter',
+                        telegramLinked: result.user.telegramLinked || false
                     };
                     localStorage.setItem('cloudUser', JSON.stringify(cloudUser));
                     updateCloudStatusBadge();
@@ -1769,6 +1798,68 @@
             };
             
             const url = `${GOOGLE_APPS_SCRIPT_URL}?action=register&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}&name=${encodeURIComponent(name)}&callback=${callbackName}`;
+            const script = document.createElement('script');
+            script.id = callbackName + '_script';
+            script.src = url;
+            script.onerror = function() {
+                alert('❌ Грешка при свързване с сървъра!');
+                document.getElementById(callbackName + '_script').remove();
+                delete window[callbackName];
+            };
+            document.body.appendChild(script);
+        }
+
+        function doGenerateTelegramCode() {
+            if (!cloudUser) return;
+            
+            const callbackName = 'telegramCodeCallback_' + Date.now();
+            
+            window[callbackName] = function(result) {
+                document.getElementById(callbackName + '_script').remove();
+                delete window[callbackName];
+                
+                if (result.success) {
+                    document.getElementById('telegramCodeDisplay').textContent = result.code;
+                    document.getElementById('telegramBotUsernameDisplay').textContent = result.botUsername ? '@' + result.botUsername : 'бота';
+                    document.getElementById('telegramCodeBox').classList.remove('hidden');
+                } else {
+                    alert('❌ ' + (result.error || 'Грешка при генериране на код!'));
+                }
+            };
+            
+            const url = `${GOOGLE_APPS_SCRIPT_URL}?action=generateTelegramLinkCode&email=${encodeURIComponent(cloudUser.email)}&callback=${callbackName}`;
+            const script = document.createElement('script');
+            script.id = callbackName + '_script';
+            script.src = url;
+            script.onerror = function() {
+                alert('❌ Грешка при свързване с сървъра!');
+                document.getElementById(callbackName + '_script').remove();
+                delete window[callbackName];
+            };
+            document.body.appendChild(script);
+        }
+
+        function doUnlinkTelegram() {
+            if (!cloudUser) return;
+            if (!confirm('Сигурен ли си че искаш да прекъснеш връзката с Telegram?')) return;
+            
+            const callbackName = 'unlinkTelegramCallback_' + Date.now();
+            
+            window[callbackName] = function(result) {
+                document.getElementById(callbackName + '_script').remove();
+                delete window[callbackName];
+                
+                if (result.success) {
+                    cloudUser.telegramLinked = false;
+                    localStorage.setItem('cloudUser', JSON.stringify(cloudUser));
+                    alert('✅ ' + result.message);
+                    updateCloudModalView();
+                } else {
+                    alert('❌ ' + (result.error || 'Грешка при прекъсване на връзка!'));
+                }
+            };
+            
+            const url = `${GOOGLE_APPS_SCRIPT_URL}?action=unlinkTelegram&email=${encodeURIComponent(cloudUser.email)}&callback=${callbackName}`;
             const script = document.createElement('script');
             script.id = callbackName + '_script';
             script.src = url;
