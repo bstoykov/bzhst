@@ -710,6 +710,10 @@
                 </a>
             </p>
             <div style="margin-top: 20px; display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+                <button class="btn-info" onclick="openInfoModalToTelegram()" style="background: linear-gradient(135deg, #2196F3 0%, #667eea 100%); position: relative;">
+                    📱 Telegram бот
+                    <span style="background: #FF9800; color: white; font-size: 0.6em; padding: 2px 8px; border-radius: 10px; margin-left: 6px; vertical-align: middle;">НОВО</span>
+                </button>
                 <button class="btn-info" onclick="openInfoModal()">
                     ℹ️ Информация - Как работи?
                 </button>
@@ -877,7 +881,7 @@
                         <p style="margin-left: 20px;">• Изисква регистрация<br>• Натисни "☁️ Облак" → "Регистрирай се"</p>
                     </div>
 
-                    <div class="info-section">
+                    <div class="info-section" id="telegramInfoSection">
                         <h3>📱 Telegram бот</h3>
                         <p style="font-size: 0.9em; color: #666; margin-bottom: 10px;">
                             Можеш да свържеш акаунта си с Telegram бот - по желание, от "☁️ Облак" → "📧 Имейли" → "🔗 Свържи Telegram".
@@ -2567,6 +2571,14 @@
         function openInfoFromCloud(tab) {
             closeCloudModal();
             openInfoModal(tab);
+        }
+
+        function openInfoModalToTelegram() {
+            openInfoModal('cloud');
+            setTimeout(() => {
+                const section = document.getElementById('telegramInfoSection');
+                if (section) section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 50);
         }
 
         function closeInfoModal() {
