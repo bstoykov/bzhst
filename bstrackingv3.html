@@ -136,6 +136,60 @@
             box-shadow: 0 5px 15px rgba(156, 39, 176, 0.3);
         }
 
+        /* Day action sheet (mark a day without scrolling back up) */
+        .day-sheet-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: flex-end;
+            justify-content: center;
+        }
+
+        .day-sheet-overlay.open {
+            display: flex;
+        }
+
+        .day-sheet {
+            background: white;
+            width: 100%;
+            max-width: 500px;
+            border-radius: 20px 20px 0 0;
+            padding: 20px;
+            animation: daySheetSlideUp 0.2s ease;
+        }
+
+        @keyframes daySheetSlideUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+
+        .day-sheet h3 {
+            text-align: center;
+            margin-bottom: 16px;
+            color: #333;
+        }
+
+        .day-sheet-btn {
+            width: 100%;
+            padding: 14px;
+            margin-bottom: 8px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            color: white;
+        }
+
+        .day-sheet-btn.office { background: #4CAF50; }
+        .day-sheet-btn.home { background: #2196F3; }
+        .day-sheet-btn.vacation { background: #FF9800; }
+        .day-sheet-btn.holiday { background: #9C27B0; }
+        .day-sheet-btn.clear { background: #e0e0e0; color: #333; }
+        .day-sheet-btn.cancel { background: transparent; color: #999; font-weight: normal; }
+
         .btn-info {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
@@ -964,6 +1018,18 @@
                     </p>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- Day Action Sheet: mark a day directly from the calendar, no scrolling to top -->
+    <div class="day-sheet-overlay" id="daySheetOverlay" onclick="if(event.target===this) closeDaySheet();">
+        <div class="day-sheet">
+            <h3 id="daySheetLabel">Избери ден</h3>
+            <button class="day-sheet-btn office" onclick="markDayFromSheet('office')">🏢 Офис</button>
+            <button class="day-sheet-btn home" onclick="markDayFromSheet('home')">🏠 Home Office</button>
+            <button class="day-sheet-btn vacation" onclick="markDayFromSheet('vacation')">🌴 Почивка/Болничен</button>
+            <button class="day-sheet-btn holiday" onclick="markDayFromSheet('holiday')">🎉 Празник</button>
+            <button class="day-sheet-btn cancel" onclick="closeDaySheet()">Отказ</button>
         </div>
     </div>
 
@@ -2194,6 +2260,20 @@
         // ORIGINAL APP CODE CONTINUES BELOW
         // ============================================
 
+        // Core logic shared by the top form (addDay) and the calendar day-sheet
+        // (markDayFromSheet): stores the mark locally + in the cloud and refreshes the UI.
+        function applyAttendanceMark(dateStr, type) {
+            attendanceData[dateStr] = type;
+            localStorage.setItem('attendanceData', JSON.stringify(attendanceData));
+
+            // Save to cloud if logged in
+            if (cloudUser && cloudUser.email) {
+                saveToCloud(dateStr, type);
+            }
+
+            updateDisplay();
+        }
+
         function addDay(type) {
             const dateInput = document.getElementById('dateInput').value;
             if (!dateInput) {
@@ -2206,7 +2286,7 @@
             const date = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
             date.setHours(0, 0, 0, 0);
             const dayOfWeek = date.getDay();
-            
+
             // Check if weekend
             if (dayOfWeek === 0 || dayOfWeek === 6) {
                 if (!confirm('Избрана е почивен ден. Сигурен ли си?')) {
@@ -2214,27 +2294,19 @@
                 }
             }
 
-            attendanceData[dateInput] = type;
-            localStorage.setItem('attendanceData', JSON.stringify(attendanceData));
-            
-            // Save to cloud if logged in
-            if (cloudUser && cloudUser.email) {
-                saveToCloud(dateInput, type);
-            }
-            
-            updateDisplay();
-            
+            applyAttendanceMark(dateInput, type);
+
             // Move to next working day
             const nextDate = new Date(date);
             nextDate.setDate(nextDate.getDate() + 1);
             nextDate.setHours(0, 0, 0, 0);
-            
+
             // Skip weekends
             while (nextDate.getDay() === 0 || nextDate.getDay() === 6) {
                 nextDate.setDate(nextDate.getDate() + 1);
                 nextDate.setHours(0, 0, 0, 0);
             }
-            
+
             document.getElementById('dateInput').valueAsDate = nextDate;
         }
 
@@ -2556,8 +2628,48 @@
             document.getElementById('calendarGrid').innerHTML = calendarHTML;
         }
 
+        let selectedSheetDate = null;
+
         function selectDate(dateStr) {
+            // Also keep the date input in sync (used by the top form / keyboard flow)
             document.getElementById('dateInput').value = dateStr;
+            openDaySheet(dateStr);
+        }
+
+        function openDaySheet(dateStr) {
+            selectedSheetDate = dateStr;
+
+            const parts = dateStr.split('-');
+            const date = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+            const monthNamesShort = ['януари', 'февруари', 'март', 'април', 'май', 'юни',
+                                     'юли', 'август', 'септември', 'октомври', 'ноември', 'декември'];
+            const dayNamesShort = ['неделя', 'понеделник', 'вторник', 'сряда', 'четвъртък', 'петък', 'събота'];
+            const label = `${dayNamesShort[date.getDay()]}, ${date.getDate()} ${monthNamesShort[date.getMonth()]}`;
+
+            document.getElementById('daySheetLabel').textContent = label;
+            document.getElementById('daySheetOverlay').classList.add('open');
+        }
+
+        function closeDaySheet() {
+            document.getElementById('daySheetOverlay').classList.remove('open');
+            selectedSheetDate = null;
+        }
+
+        function markDayFromSheet(type) {
+            if (!selectedSheetDate) return;
+
+            const parts = selectedSheetDate.split('-');
+            const date = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+            const dayOfWeek = date.getDay();
+
+            if (dayOfWeek === 0 || dayOfWeek === 6) {
+                if (!confirm('Избрана е почивен ден. Сигурен ли си?')) {
+                    return;
+                }
+            }
+
+            applyAttendanceMark(selectedSheetDate, type);
+            closeDaySheet();
         }
 
         // Initial display
