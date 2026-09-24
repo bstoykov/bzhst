@@ -136,27 +136,25 @@
             box-shadow: 0 5px 15px rgba(156, 39, 176, 0.3);
         }
 
-        /* Day action sheet (mark a day without scrolling back up) */
+        /* Day action sheet (mark a day without scrolling back up) —
+           styled as a wide sticky bottom bar, matching the bulk-select bar */
         .day-sheet-overlay {
             display: none;
             position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.5);
+            left: 0; right: 0; bottom: 0;
             z-index: 1000;
-            align-items: flex-end;
-            justify-content: center;
         }
 
         .day-sheet-overlay.open {
-            display: flex;
+            display: block;
         }
 
         .day-sheet {
             background: white;
             width: 100%;
-            max-width: 500px;
             border-radius: 20px 20px 0 0;
-            padding: 20px;
+            padding: 14px 16px;
+            box-shadow: 0 -5px 25px rgba(0,0,0,0.15);
             animation: daySheetSlideUp 0.2s ease;
         }
 
@@ -165,19 +163,32 @@
             to { transform: translateY(0); }
         }
 
+        .day-sheet-inner {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
         .day-sheet h3 {
             text-align: center;
-            margin-bottom: 16px;
+            margin-bottom: 10px;
             color: #333;
+            font-size: 1em;
+        }
+
+        .day-sheet-btns {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: center;
         }
 
         .day-sheet-btn {
-            width: 100%;
-            padding: 14px;
-            margin-bottom: 8px;
+            flex: 1 1 auto;
+            min-width: 100px;
+            padding: 12px 10px;
             border: none;
             border-radius: 10px;
-            font-size: 1em;
+            font-size: 0.85em;
             font-weight: bold;
             cursor: pointer;
             color: white;
@@ -188,7 +199,15 @@
         .day-sheet-btn.vacation { background: #FF9800; }
         .day-sheet-btn.holiday { background: #9C27B0; }
         .day-sheet-btn.clear { background: #e0e0e0; color: #333; }
-        .day-sheet-btn.cancel { background: transparent; color: #999; font-weight: normal; }
+        .day-sheet-btn.cancel { background: #e0e0e0; color: #333; }
+
+        @media (max-width: 600px) {
+            .day-sheet-btn {
+                min-width: 80px;
+                font-size: 0.75em;
+                padding: 10px 6px;
+            }
+        }
 
         .btn-info {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -589,6 +608,125 @@
             margin-bottom: 20px;
         }
 
+        .calendar-header-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .calendar-header-row h2 {
+            margin-bottom: 0;
+        }
+
+        .btn-multiselect {
+            background: #f0f0f5;
+            color: #555;
+            border: 2px solid #ddd;
+            padding: 8px 16px;
+            border-radius: 10px;
+            font-size: 0.85em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .btn-multiselect:hover {
+            background: #e6e6ef;
+        }
+
+        .btn-multiselect.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .calendar-day.day-selected {
+            outline: 3px solid #667eea;
+            outline-offset: -3px;
+            position: relative;
+        }
+
+        .calendar-day.day-selected::after {
+            content: '✓';
+            position: absolute;
+            top: 2px;
+            right: 4px;
+            background: #667eea;
+            color: white;
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            font-size: 0.7em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Sticky bulk-apply bar (multi-select mode) */
+        .bulk-bar {
+            display: none;
+            position: fixed;
+            left: 0; right: 0; bottom: 0;
+            background: white;
+            box-shadow: 0 -5px 25px rgba(0,0,0,0.15);
+            padding: 14px 16px;
+            z-index: 900;
+            border-radius: 20px 20px 0 0;
+        }
+
+        .bulk-bar.open {
+            display: block;
+        }
+
+        .bulk-bar-inner {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .bulk-bar-label {
+            text-align: center;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .bulk-bar-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .bulk-bar-buttons button {
+            flex: 1 1 auto;
+            min-width: 100px;
+            padding: 12px 10px;
+            border: none;
+            border-radius: 10px;
+            font-size: 0.85em;
+            font-weight: bold;
+            cursor: pointer;
+            color: white;
+        }
+
+        .bulk-bar-buttons .office { background: #4CAF50; }
+        .bulk-bar-buttons .home { background: #2196F3; }
+        .bulk-bar-buttons .vacation { background: #FF9800; }
+        .bulk-bar-buttons .holiday { background: #9C27B0; }
+        .bulk-bar-buttons .cancel { background: #e0e0e0; color: #333; }
+
+        @media (max-width: 600px) {
+            .bulk-bar-buttons button {
+                min-width: 80px;
+                font-size: 0.75em;
+                padding: 10px 6px;
+            }
+        }
+
         .calendar-grid {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
@@ -804,7 +942,10 @@
         </div>
 
         <div class="calendar">
-            <h2 id="calendarTitle">Календар</h2>
+            <div class="calendar-header-row">
+                <h2 id="calendarTitle">Календар</h2>
+                <button class="btn-multiselect" id="multiSelectToggleBtn" onclick="toggleMultiSelectMode()">☑️ Избери дни</button>
+            </div>
             <div class="calendar-grid" id="calendarGrid">
                 <!-- Calendar will be inserted here -->
             </div>
@@ -1022,14 +1163,32 @@
     </div>
 
     <!-- Day Action Sheet: mark a day directly from the calendar, no scrolling to top -->
-    <div class="day-sheet-overlay" id="daySheetOverlay" onclick="if(event.target===this) closeDaySheet();">
+    <div class="day-sheet-overlay" id="daySheetOverlay">
         <div class="day-sheet">
-            <h3 id="daySheetLabel">Избери ден</h3>
-            <button class="day-sheet-btn office" onclick="markDayFromSheet('office')">🏢 Офис</button>
-            <button class="day-sheet-btn home" onclick="markDayFromSheet('home')">🏠 Home Office</button>
-            <button class="day-sheet-btn vacation" onclick="markDayFromSheet('vacation')">🌴 Почивка/Болничен</button>
-            <button class="day-sheet-btn holiday" onclick="markDayFromSheet('holiday')">🎉 Празник</button>
-            <button class="day-sheet-btn cancel" onclick="closeDaySheet()">Отказ</button>
+            <div class="day-sheet-inner">
+                <h3 id="daySheetLabel">Избери ден</h3>
+                <div class="day-sheet-btns">
+                    <button class="day-sheet-btn office" onclick="markDayFromSheet('office')">🏢 Офис</button>
+                    <button class="day-sheet-btn home" onclick="markDayFromSheet('home')">🏠 Home</button>
+                    <button class="day-sheet-btn vacation" onclick="markDayFromSheet('vacation')">🌴 Почивка</button>
+                    <button class="day-sheet-btn holiday" onclick="markDayFromSheet('holiday')">🎉 Празник</button>
+                    <button class="day-sheet-btn cancel" onclick="closeDaySheet()">Отказ</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sticky bulk-apply bar for multi-select mode -->
+    <div class="bulk-bar" id="bulkBar">
+        <div class="bulk-bar-inner">
+            <div class="bulk-bar-label" id="bulkBarLabel">Избрани: 0 дни</div>
+            <div class="bulk-bar-buttons">
+                <button class="office" onclick="applyBulkMark('office')">🏢 Офис</button>
+                <button class="home" onclick="applyBulkMark('home')">🏠 Home</button>
+                <button class="vacation" onclick="applyBulkMark('vacation')">🌴 Почивка</button>
+                <button class="holiday" onclick="applyBulkMark('holiday')">🎉 Празник</button>
+                <button class="cancel" onclick="toggleMultiSelectMode()">Отказ</button>
+            </div>
         </div>
     </div>
 
@@ -1336,6 +1495,8 @@
         let cloudUser = JSON.parse(localStorage.getItem('cloudUser')) || null;
         let attendanceData = JSON.parse(localStorage.getItem('attendanceData')) || {};
         let currentPeriod = 'quarter';
+        let multiSelectMode = false;
+        let selectedDays = new Set();
 
         function getTargetPercent() {
             // Cloud users can have custom target %, defaults to 60
@@ -2612,9 +2773,13 @@
                 const isInRange = current >= startDate && current <= endDate;
                 const opacity = isInRange ? '1' : '0.3';
 
+                if (multiSelectMode && selectedDays.has(dateStr)) {
+                    className += ' day-selected';
+                }
+
                 calendarHTML += `
-                    <div class="${className}" style="opacity: ${opacity}" 
-                         onclick="selectDate('${dateStr}')" 
+                    <div class="${className}" style="opacity: ${opacity}"
+                         onclick="onDayClick('${dateStr}')"
                          title="${dateStr}">
                         <div class="day-number">${current.getDate()}</div>
                         <div>${emoji}</div>
@@ -2629,6 +2794,83 @@
         }
 
         let selectedSheetDate = null;
+
+        // ============================================
+        // MULTI-SELECT MODE: mark many days at once
+        // ============================================
+        function toggleMultiSelectMode() {
+            multiSelectMode = !multiSelectMode;
+            selectedDays.clear();
+
+            const btn = document.getElementById('multiSelectToggleBtn');
+            btn.classList.toggle('active', multiSelectMode);
+            btn.textContent = multiSelectMode ? '✖️ Спри избора' : '☑️ Избери дни';
+
+            updateBulkBar();
+            updateCalendar();
+        }
+
+        function updateBulkBar() {
+            const bar = document.getElementById('bulkBar');
+            if (multiSelectMode && selectedDays.size > 0) {
+                bar.classList.add('open');
+                document.getElementById('bulkBarLabel').textContent = `Избрани: ${selectedDays.size} ${selectedDays.size === 1 ? 'ден' : 'дни'}`;
+                document.body.style.paddingBottom = '120px';
+            } else {
+                bar.classList.remove('open');
+                document.body.style.paddingBottom = '';
+            }
+        }
+
+        function toggleDaySelection(dateStr) {
+            if (selectedDays.has(dateStr)) {
+                selectedDays.delete(dateStr);
+            } else {
+                selectedDays.add(dateStr);
+            }
+            updateBulkBar();
+            updateCalendar();
+        }
+
+        function applyBulkMark(type) {
+            if (selectedDays.size === 0) return;
+
+            const hasWeekend = [...selectedDays].some(dateStr => {
+                const parts = dateStr.split('-');
+                const d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+                const dow = d.getDay();
+                return dow === 0 || dow === 6;
+            });
+
+            if (hasWeekend) {
+                if (!confirm('Сред избраните дни има почивни дни. Сигурен ли си?')) {
+                    return;
+                }
+            }
+
+            selectedDays.forEach(dateStr => {
+                attendanceData[dateStr] = type;
+            });
+            localStorage.setItem('attendanceData', JSON.stringify(attendanceData));
+
+            // Save to cloud if logged in (one request per day)
+            if (cloudUser && cloudUser.email) {
+                selectedDays.forEach(dateStr => saveToCloud(dateStr, type));
+            }
+
+            toggleMultiSelectMode();
+            updateDisplay();
+        }
+
+        // Routes a calendar day click to either the multi-select toggle
+        // or the single-day action sheet, depending on current mode.
+        function onDayClick(dateStr) {
+            if (multiSelectMode) {
+                toggleDaySelection(dateStr);
+            } else {
+                selectDate(dateStr);
+            }
+        }
 
         function selectDate(dateStr) {
             // Also keep the date input in sync (used by the top form / keyboard flow)
@@ -2648,10 +2890,12 @@
 
             document.getElementById('daySheetLabel').textContent = label;
             document.getElementById('daySheetOverlay').classList.add('open');
+            document.body.style.paddingBottom = '120px';
         }
 
         function closeDaySheet() {
             document.getElementById('daySheetOverlay').classList.remove('open');
+            document.body.style.paddingBottom = '';
             selectedSheetDate = null;
         }
 
