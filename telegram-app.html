@@ -88,13 +88,131 @@
         .pstat.compliance.bad .num { color: #f44336; }
         .pstat.remaining .num { color: #667eea; }
 
+        .calendar-header-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .month-nav {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-arrow {
+            background: #f0f0f5;
+            border: none;
+            color: #667eea;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            font-size: 0.9em;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .nav-arrow:active { background: #e0e0ea; }
+
         .month-title {
-            text-align: center;
             font-weight: bold;
             font-size: 1.05em;
             color: #333;
-            margin-bottom: 12px;
+            min-width: 110px;
+            text-align: center;
         }
+
+        .btn-multiselect {
+            background: #f0f0f5;
+            color: #555;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 10px;
+            font-size: 0.75em;
+            font-weight: bold;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .btn-multiselect.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .calendar-day.day-selected {
+            outline: 3px solid #667eea;
+            outline-offset: -3px;
+            position: relative;
+        }
+
+        .calendar-day.day-selected::after {
+            content: '✓';
+            position: absolute;
+            top: 1px;
+            right: 3px;
+            background: #667eea;
+            color: white;
+            border-radius: 50%;
+            width: 14px;
+            height: 14px;
+            font-size: 0.65em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Sticky bulk-apply bar */
+        .bulk-bar {
+            display: none;
+            position: fixed;
+            left: 0; right: 0; bottom: 0;
+            background: white;
+            box-shadow: 0 -5px 25px rgba(0,0,0,0.15);
+            padding: 12px 14px;
+            z-index: 900;
+            border-radius: 18px 18px 0 0;
+        }
+
+        .bulk-bar.open { display: block; }
+
+        .bulk-bar-label {
+            text-align: center;
+            font-weight: bold;
+            color: #333;
+            font-size: 0.85em;
+            margin-bottom: 8px;
+        }
+
+        .bulk-bar-buttons {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .bulk-bar-buttons button {
+            flex: 1 1 auto;
+            min-width: 70px;
+            padding: 10px 6px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.72em;
+            font-weight: bold;
+            cursor: pointer;
+            color: white;
+        }
+
+        .bulk-bar-buttons .office { background: #4CAF50; }
+        .bulk-bar-buttons .home { background: #2196F3; }
+        .bulk-bar-buttons .vacation { background: #FF9800; }
+        .bulk-bar-buttons .holiday { background: #9C27B0; }
+        .bulk-bar-buttons .cancel { background: #e0e0e0; color: #333; }
 
         .calendar-grid {
             display: grid;
@@ -131,7 +249,7 @@
         .day-vacation { background: #ffe0b2; border-color: #FF9800; }
         .day-holiday { background: #e1bee7; border-color: #9C27B0; }
         .day-weekend { background: #f5f5f5; color: #bbb; }
-        .day-empty-past { background: #fafafa; border-style: dashed; }
+        .day-empty-past { background: #e3f2fd; border-color: #90caf9; border-style: dashed; }
 
         .day-number { font-weight: bold; }
 
@@ -214,7 +332,14 @@
         <div class="period-cards" id="periodCards"></div>
 
         <div class="card">
-            <div class="month-title" id="monthTitle">-</div>
+            <div class="calendar-header-row">
+                <div class="month-nav">
+                    <button class="nav-arrow" onclick="changeMonth(-1)">◀</button>
+                    <div class="month-title" id="monthTitle">-</div>
+                    <button class="nav-arrow" onclick="changeMonth(1)">▶</button>
+                </div>
+                <button class="btn-multiselect" id="multiSelectToggleBtn" onclick="toggleMultiSelectMode()">☑️ Избери дни</button>
+            </div>
             <div class="calendar-grid" id="calendarGrid"></div>
         </div>
 
@@ -223,6 +348,18 @@
         </p>
     </div>
 
+</div>
+
+<!-- Sticky bulk-apply bar for multi-select mode -->
+<div class="bulk-bar" id="bulkBar">
+    <div class="bulk-bar-label" id="bulkBarLabel">Избрани: 0 дни</div>
+    <div class="bulk-bar-buttons">
+        <button class="office" onclick="applyBulkMark('office')">🏢 Офис</button>
+        <button class="home" onclick="applyBulkMark('home')">🏠 Home</button>
+        <button class="vacation" onclick="applyBulkMark('vacation')">🌴 Почивка</button>
+        <button class="holiday" onclick="applyBulkMark('holiday')">🎉 Празник</button>
+        <button class="cancel" onclick="toggleMultiSelectMode()">Отказ</button>
+    </div>
 </div>
 
 <!-- Action Sheet -->
@@ -262,6 +399,13 @@
     let targetPercent = 60;
     let userEmail = null;
     let selectedDateStr = null;
+
+    const today0 = new Date();
+    let currentViewYear = today0.getFullYear();
+    let currentViewMonth = today0.getMonth();
+
+    let multiSelectMode = false;
+    let selectedDays = new Set();
 
     const monthNames = ['Януари', 'Февруари', 'Март', 'Април', 'Май', 'Юни',
                          'Юли', 'Август', 'Септември', 'Октомври', 'Ноември', 'Декември'];
@@ -427,10 +571,21 @@
         return `${y}-${m}-${d}`;
     }
 
+    function changeMonth(delta) {
+        currentViewMonth += delta;
+        if (currentViewMonth < 0) {
+            currentViewMonth = 11;
+            currentViewYear--;
+        } else if (currentViewMonth > 11) {
+            currentViewMonth = 0;
+            currentViewYear++;
+        }
+        renderMonth();
+    }
+
     function renderMonth() {
-        const today = new Date();
-        const year = today.getFullYear();
-        const month = today.getMonth();
+        const year = currentViewYear;
+        const month = currentViewMonth;
 
         document.getElementById('monthTitle').textContent = `${monthNames[month]} ${year}`;
 
@@ -448,7 +603,8 @@
         }
 
         const daysInMonth = new Date(year, month + 1, 0).getDate();
-        const todayNorm = new Date(year, month, today.getDate());
+        const realToday = new Date();
+        realToday.setHours(0, 0, 0, 0);
 
         for (let d = 1; d <= daysInMonth; d++) {
             const dateObj = new Date(year, month, d);
@@ -456,7 +612,7 @@
             const dow = dateObj.getDay();
             const isWeekend = dow === 0 || dow === 6;
             const type = attendanceData[dStr] || '';
-            const isPast = dateObj < todayNorm;
+            const isPast = dateObj < realToday;
 
             let cls = 'calendar-day';
             let emoji = '';
@@ -475,13 +631,99 @@
                 cls += ' day-empty-past'; emoji = '📱';
             }
 
-            html += `<div class="${cls}" onclick="openSheet('${dStr}', ${d})">
+            if (multiSelectMode && selectedDays.has(dStr)) {
+                cls += ' day-selected';
+            }
+
+            html += `<div class="${cls}" onclick="onDayClick('${dStr}', ${d})">
                         <div class="day-number">${d}</div>
                         <div>${emoji}</div>
                      </div>`;
         }
 
         document.getElementById('calendarGrid').innerHTML = html;
+    }
+
+    // ============================================
+    // MULTI-SELECT MODE: mark many days at once
+    // ============================================
+    function toggleMultiSelectMode() {
+        multiSelectMode = !multiSelectMode;
+        selectedDays.clear();
+
+        const btn = document.getElementById('multiSelectToggleBtn');
+        btn.classList.toggle('active', multiSelectMode);
+        btn.textContent = multiSelectMode ? '✖️ Спри избора' : '☑️ Избери дни';
+
+        updateBulkBar();
+        renderMonth();
+    }
+
+    function updateBulkBar() {
+        const bar = document.getElementById('bulkBar');
+        if (multiSelectMode && selectedDays.size > 0) {
+            bar.classList.add('open');
+            document.getElementById('bulkBarLabel').textContent =
+                `Избрани: ${selectedDays.size} ${selectedDays.size === 1 ? 'ден' : 'дни'}`;
+            document.body.style.paddingBottom = '110px';
+        } else {
+            bar.classList.remove('open');
+            document.body.style.paddingBottom = '';
+        }
+    }
+
+    function toggleDaySelection(dateStr) {
+        if (selectedDays.has(dateStr)) {
+            selectedDays.delete(dateStr);
+        } else {
+            selectedDays.add(dateStr);
+        }
+        updateBulkBar();
+        renderMonth();
+    }
+
+    function applyBulkMark(type) {
+        if (selectedDays.size === 0 || !CHAT_ID) return;
+
+        const days = [...selectedDays];
+        let remaining = days.length;
+        let hadError = false;
+
+        days.forEach(dateStr => {
+            jsonpRequest(
+                { action: 'saveAttendanceByTelegramChatId', chatId: CHAT_ID, date: dateStr, type: type },
+                function() {
+                    if (type === 'clear') delete attendanceData[dateStr];
+                    else attendanceData[dateStr] = type;
+                    remaining--;
+                    if (remaining === 0) finishBulk();
+                },
+                function() {
+                    hadError = true;
+                    remaining--;
+                    if (remaining === 0) finishBulk();
+                }
+            );
+        });
+
+        function finishBulk() {
+            toggleMultiSelectMode();
+            renderMonth();
+            renderStats();
+            if (tg && tg.HapticFeedback) {
+                tg.HapticFeedback.notificationOccurred(hadError ? 'error' : 'success');
+            }
+            if (hadError) alert('⚠️ Някои дни не бяха запазени, провери връзката.');
+        }
+    }
+
+    // Routes a day click to either the multi-select toggle or the single-day sheet
+    function onDayClick(dateStr, dayNum) {
+        if (multiSelectMode) {
+            toggleDaySelection(dateStr);
+        } else {
+            openSheet(dateStr, dayNum);
+        }
     }
 
     function openSheet(dateStr, dayNum) {
